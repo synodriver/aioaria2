@@ -36,3 +36,5 @@ server=aioaria2.Aria2rpcServer(["path/aria2c.exe","--enable-rpc=true",
         本模块在其之上构建，提供了异步支持，以级websocket支持
 ####Notice
 #####在最终v1.0发布之前不建议直接setup安装
+
+![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)
