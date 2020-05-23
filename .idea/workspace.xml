@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="63984cbb-e643-4926-8a9b-89abb2c99510" name="默认更改列表" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DatabaseView">
+    <option name="SHOW_INTERMEDIATE" value="true" />
+    <option name="GROUP_DATA_SOURCES" value="true" />
+    <option name="GROUP_SCHEMA" value="true" />
+    <option name="GROUP_CONTENTS" value="false" />
+    <option name="SORT_POSITIONED" value="false" />
+    <option name="SHOW_EMPTY_GROUPS" value="false" />
+    <option name="AUTO_SCROLL_FROM_SOURCE" value="false" />
+    <option name="HIDDEN_KINDS">
+      <set />
+    </option>
+    <expand />
+    <select />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectId" id="1ad5Wc63jV625htc79JXO4cZOxD" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DatabaseDriversLRU" value="mariadb" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="restartRequiresConfirmation" value="false" />
+    <property name="settings.editor.selected.configurable" value="preferences.fileTypes" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\jhc\python_async_aria2\aioaria2\tests" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.test_websocket (1)">
+    <configuration name="client (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="python_async_aria2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/aioaria2" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/aioaria2/client.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="demo" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="python_async_aria2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/demo.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="python_async_aria2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/aioaria2/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/aioaria2/tests/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_websocket (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="python_async_aria2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/aioaria2/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/aioaria2/tests/test_websocket.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_websocket" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="python_async_aria2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="F:\jhc\python_async_aria2\aioaria2\tests\test_websocket.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.test_websocket (1)" />
+        <item itemvalue="Python.demo" />
+        <item itemvalue="Python.test" />
+        <item itemvalue="Python.test_websocket" />
+        <item itemvalue="Python.client (1)" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="63984cbb-e643-4926-8a9b-89abb2c99510" name="默认更改列表" comment="" />
+      <created>1587052662767</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1587052662767</updated>
+      <workItem from="1587052664758" duration="2149000" />
+      <workItem from="1587096648072" duration="50971000" />
+      <workItem from="1587193012379" duration="33840000" />
+      <workItem from="1588389562444" duration="8655000" />
+      <workItem from="1588401168430" duration="19818000" />
+      <workItem from="1588475224709" duration="4521000" />
+      <workItem from="1588482643184" duration="9651000" />
+      <workItem from="1588755862743" duration="1911000" />
+      <workItem from="1588851602243" duration="3991000" />
+      <workItem from="1588914238638" duration="24794000" />
+      <workItem from="1589051389518" duration="3940000" />
+      <workItem from="1589186345762" duration="325000" />
+      <workItem from="1589310067142" duration="1773000" />
+      <workItem from="1589359215710" duration="4000" />
+      <workItem from="1589648388788" duration="207000" />
+      <workItem from="1589694569138" duration="2585000" />
+      <workItem from="1589710145063" duration="1272000" />
+      <workItem from="1590209967469" duration="5220000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="362" y="71" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1587207759389">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="362" y="71" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1587207759389" />
+    <state x="664" y="230" key="#xdebugger.evaluate" timestamp="1587234249899">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="664" y="230" key="#xdebugger.evaluate/0.0.1536.824@0.0.1536.824" timestamp="1587234249899" />
+    <state width="1493" height="380" key="GridCell.Tab.0.bottom" timestamp="1589116868810">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="380" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1589116868810" />
+    <state width="1493" height="380" key="GridCell.Tab.0.center" timestamp="1589116868809">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="380" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1589116868809" />
+    <state width="1493" height="380" key="GridCell.Tab.0.left" timestamp="1589116868809">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="380" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1589116868809" />
+    <state width="1493" height="380" key="GridCell.Tab.0.right" timestamp="1589116868810">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="380" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1589116868810" />
+    <state width="1493" height="250" key="GridCell.Tab.1.bottom" timestamp="1588961800641">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="250" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588961800641" />
+    <state width="1493" height="250" key="GridCell.Tab.1.center" timestamp="1588961800641">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="250" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1588961800641" />
+    <state width="1493" height="250" key="GridCell.Tab.1.left" timestamp="1588961800640">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="250" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1588961800640" />
+    <state width="1493" height="250" key="GridCell.Tab.1.right" timestamp="1588961800641">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="250" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1588961800641" />
+    <state x="271" y="55" key="SettingsEditor" timestamp="1589311052138">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="271" y="55" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1589311052138" />
+    <state width="768" height="412" key="XDebugger.FullValuePopup" timestamp="1588404247372">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="768" height="412" key="XDebugger.FullValuePopup/0.0.1536.824@0.0.1536.824" timestamp="1588404247372" />
+    <state x="469" y="237" key="com.intellij.ide.util.TipDialog" timestamp="1589694568824">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="469" y="237" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1589694568824" />
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1588924329573">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1588924329573" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/python_async_aria2$server.coverage" NAME="server Coverage Results" MODIFIED="1587274102892" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aioaria2" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$test.coverage" NAME="test Coverage Results" MODIFIED="1588936077024" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aioaria2/tests" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$test_websocket__1_.coverage" NAME="test_websocket (1) Coverage Results" MODIFIED="1589705243712" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aioaria2/tests" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$client__1_.coverage" NAME="client (1) Coverage Results" MODIFIED="1588478386705" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aioaria2" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$utils.coverage" NAME="utils Coverage Results" MODIFIED="1587125052892" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aioaria2" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$client.coverage" NAME="client Coverage Results" MODIFIED="1588404971547" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="E:/Anaconda3/Lib/site-packages/aiohttp" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$demo.coverage" NAME="demo Coverage Results" MODIFIED="1589113471064" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$test_server.coverage" NAME="test_server Coverage Results" MODIFIED="1587278419841" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/aioaria2/tests" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$test__1_.coverage" NAME="test (1) Coverage Results" MODIFIED="1587149130743" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$setup.coverage" NAME="setup Coverage Results" MODIFIED="1587203766639" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$my_test__1_.coverage" NAME="my_test (1) Coverage Results" MODIFIED="1588401188650" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/python_async_aria2$test_websocket.coverage" NAME="test_websocket Coverage Results" MODIFIED="1588851668454" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>
