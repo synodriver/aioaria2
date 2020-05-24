@@ -1,10 +1,10 @@
 提供aria2异步客户端的包
 ===
 
-#本模块提供与aria2异步通信的客户端与管理aria2进程的服务端
+# 本模块提供与aria2异步通信的客户端与管理aria2进程的服务端
 
-##使用方法：
-###示例如下
+## 使用方法：
+### 示例如下
 ```python
 import aioaria2
 import asyncio
@@ -13,6 +13,17 @@ async def main():
     async with aioaria2.Aria2HttpClient("id", "http://192.168.0.107:6800/jsonrpc", "normal",
                                         token="admin") as client:
         pprint(await client.getVersion())
+asyncio.run(main())
+```
+### client对象的相关方法见aria2手册 
+```python
+import aioaria2
+import asyncio
+from pprint import pprint
+async def main():
+    async with aioaria2.Aria2HttpClient("id", "http://192.168.0.107:6800/jsonrpc", "normal",
+                                        token="admin") as client:
+        pprint(await client.addUri(["http://www.demo.com"])) #即可下载
 asyncio.run(main())
 ```
     运行该协程函数即可，方法对应aria2jsonrpc的方法
