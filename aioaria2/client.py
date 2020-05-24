@@ -9,7 +9,6 @@ import aiohttp
 from typing import Dict, Any, List, Union, Callable
 from .exceptions import Aria2rpcException
 from .utils import add_options_and_position, b64encode_file, get_status
-from asyncio import Queue
 
 
 class _Aria2BaseClient:
