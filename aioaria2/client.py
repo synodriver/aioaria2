@@ -668,12 +668,6 @@ class _Aria2BaseClient:
             for gid in gids:
                 yield 'error'
 
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.client_session.close()
-
     async def close(self):
         await self.client_session.close()
 
@@ -723,6 +717,12 @@ class Aria2HttpClient(_Aria2BaseClient):
                     raise Aria2rpcException('unexpected result: {}'.format(data))
         except aiohttp.client_exceptions.ClientConnectionError as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.client_session.close()
 
 
 class Aria2WebsocketTrigger(_Aria2BaseClient):
