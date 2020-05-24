@@ -673,13 +673,7 @@ class _Aria2BaseClient:
 
 class Aria2HttpClient(_Aria2BaseClient):
     def __init__(self, identity: str, url: str, mode: str = 'normal', token: str = None, queue=None,
-                 client_session: aiohttp.ClientSession = None,
-                 # http_user=None, http_passwd=None,
-                 # ssl=False,
-                 # proxy: str = None,  # 代理服务器地址
-                 # proxy_user: str = None,
-                 # proxy_password: str = None
-                 **kw):
+                 client_session: aiohttp.ClientSession = None, **kw):
         """
             :param identity: 操作rpc接口的id
             :param url: rpc服务器地址
@@ -688,14 +682,8 @@ class Aria2HttpClient(_Aria2BaseClient):
                 batch - 请求加入队列，由process_queue方法处理
                 format - 返回rpc请求json结构
             :param token: rpc服务器密码 (用 `--rpc-secret`设置)
+            :param queue: 请求队列
             :param client_session: aiohttp的session
-            :param msg_type: 与aria2的通信方式，默认http，也可以是websocket
-            :param http_user: 对于aiohttp的 \client.py的_request方法的author参数，下同
-            :param http_passwd: auth密码
-            :param ssl: ssl加密 sslcontext=ssl.create_default_context(cafile:str=path)
-            :param proxy: 代理服务器地址
-            :param proxy_user: 代理服务器用户
-            :param proxy_password: 代理服务器密码
             :param kw: aiohttp.session.post的相关参数
         """
         super().__init__(identity, url, mode, token, queue)
@@ -735,6 +723,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
                 batch - 请求加入队列，由process_queue方法处理
                 format - 返回rpc请求json结构
             :param token: rpc服务器密码 (用 `--rpc-secret`设置)
+            :param queue: 请求队列
             :param kw: ws_connect()的相关参数
         """
         super().__init__(identity, url, mode, token, queue)
