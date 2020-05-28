@@ -16,7 +16,7 @@ SEC = "admin"
 
 
 def parse(html: str):
-    soup = BeautifulSoup(html)
+    soup = BeautifulSoup(html,"lxml")
     return [tag.attrs["src"] for tag in soup.find_all(name="img", attrs={"width": "100"})]
 
 
