@@ -39,7 +39,7 @@ server=aioaria2.Aria2rpcServer(["path/aria2c.exe","--enable-rpc=true",
 ### todolist
 - [x] 异步http通信
 - [x] 异步websocket通信
-- [ ] 修复server类的bug
+- [x] 修复server类的bug
 - [ ] 单元测试
 
 

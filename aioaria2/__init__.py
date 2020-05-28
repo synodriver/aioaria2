@@ -3,15 +3,11 @@
 本模块提供aria2 json rpc的异步io交互接口 和aria2进程的管理器
 """
 from .client import Aria2HttpClient, Aria2WebsocketTrigger
-from .server import Aria2rpcServer
+from .server import Aria2Server, AsyncAria2Server
 
-
-__version__ = "0.30"
+__version__ = "1.00"
 __author__ = ["synodriver", "帝国皇家近卫军"]
-__all__ = ["Aria2rpcServer", "Aria2WebsocketTrigger", "Aria2HttpClient"]
-
-if __name__ == "__main__":
-    pass
+__all__ = ["Aria2Server", "AsyncAria2Server", "Aria2WebsocketTrigger", "Aria2HttpClient"]
 
 #
 # class Aria2Client:

@@ -6,6 +6,7 @@ from queue import Queue
 q = asyncio.Queue()
 failed_gid = asyncio.Queue()
 failed_url = Queue()
+HOST = "http://127.0.0.1:6800/jsonrpc"
 
 
 def callback(future):
@@ -28,7 +29,7 @@ def callback3(future):
 
 
 async def get_trigger():
-    client = await aioaria2.Aria2WebsocketTrigger.create("id", "http://192.168.0.107:6800/jsonrpc", "batch",
+    client = await aioaria2.Aria2WebsocketTrigger.create("id", HOST, "batch",
                                                          token="admin", queue=q)
 
     client.onDownloadStart(callback)
@@ -38,7 +39,7 @@ async def get_trigger():
 
 
 async def get_client():
-    client = aioaria2.Aria2HttpClient("id", "http://192.168.0.107:6800/jsonrpc", "normal", token="admin", queue=q)
+    client = aioaria2.Aria2HttpClient("id", HOST, "normal", token="admin", queue=q)
     # q.put_nowait("1")
     print("success init")
     # print(failed_gid._qsize())
