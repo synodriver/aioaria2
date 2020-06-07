@@ -12,15 +12,17 @@ import asyncio
 # --------------------------#
 ENCODING = "gbk"
 
-
 # --------------------------#
+
+cache: Dict[str, object] = {}
+
+
 def single_instance(cls: type):
     """
     单例模式装饰器，如果两个aria2进程一同开启必定端口冲突
     :param cls: 要装饰的类
     :return:
     """
-    cache: Dict[str, object] = {}
 
     @wraps(cls)
     def inner(*args, **kw):
@@ -31,7 +33,6 @@ def single_instance(cls: type):
             instance = cls(*args, **kw)
             cache[class_name] = instance
             return instance
-
     return inner
 
 

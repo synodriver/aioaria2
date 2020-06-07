@@ -15,6 +15,7 @@ async def main():
         pprint(await client.getVersion())
 asyncio.run(main())
 ```
+### 相关ip地址应该换成自己的 
 ### client对象的相关方法见aria2手册 
 ```python
 import aioaria2
@@ -31,10 +32,14 @@ asyncio.run(main())
 ```python
 import aioaria2
 import asyncio
-server=aioaria2.Aria2rpcServer(["path/aria2c.exe","--enable-rpc=true",
-    "--rpc-listen-all=true","--rpc-secret=123"])
+async def main():
+    server = aioaria2.AsyncAria2Server(r"128aria2c.exe",
+                                       r"--conf-path=aria2.conf", "--rpc-secret=admin", daemon=True)
+    await server.start()
+    await server.wait()
+asyncio.run(main())
 ```
-    即可启动一个aria2进程
+#### 即可启动一个aria2进程
 [参考选项及设置](http://aria2.github.io/manual/en/html/)
 ### todolist
 - [x] 异步http通信
@@ -45,6 +50,12 @@ server=aioaria2.Aria2rpcServer(["path/aria2c.exe","--enable-rpc=true",
 
 [jsonrpc](https://xyne.archlinux.ca/projects/python3-aria2jsonrpc)
         本模块在其之上构建，提供了异步支持，以级websocket支持
+
+### windows用户应该加上以下设置     
+```
+asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+asyncio.set_event_loop(asyncio.ProactorEventLoop())
+```
 ####Notice
 #####在最终v1.0发布之前不建议直接setup安装
 
