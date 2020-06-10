@@ -807,6 +807,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.register(func, "result")
+        return func
 
     def onDownloadStart(self, func: Callable[[asyncio.Task], Any]):
         """
@@ -815,6 +816,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.register(func, "aria2.onDownloadStart")
+        return func
 
     def onDownloadPause(self, func: Callable[[asyncio.Task], Any]):
         """
@@ -823,6 +825,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.register(func, "aria2.onDownloadPause")
+        return func
 
     def onDownloadStop(self, func: Callable[[asyncio.Task], Any]):
         """
@@ -831,6 +834,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.register(func, "aria2.onDownloadStop")
+        return func
 
     def onDownloadComplete(self, func: Callable[[asyncio.Task], Any]):
         """
@@ -839,6 +843,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.register(func, "aria2.onDownloadComplete")
+        return func
 
     def onDownloadError(self, func: Callable[[asyncio.Task], Any]):
         """
@@ -847,6 +852,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.register(func, "aria2.onDownloadError")
+        return func
 
     def onBtDownloadComplete(self, func: Callable[[asyncio.Task], Any]):
         """
@@ -855,8 +861,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.register(func, "aria2.onBtDownloadComplete")
-
-        pass
+        return func
 
 
 if __name__ == "__main__":
