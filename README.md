@@ -2,7 +2,7 @@
 ===
 
 # 本模块提供与aria2异步通信的客户端与管理aria2进程的服务端
-
+[pypi](https://pypi.org/project/aioaria2/)
 ## 使用方法：
 ### 示例如下
 ```python
