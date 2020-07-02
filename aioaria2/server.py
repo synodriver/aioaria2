@@ -6,10 +6,11 @@
 import os
 import subprocess
 from typing import Dict
-from functools import wraps
 import asyncio
+import threading
 
 # --------------------------#
+
 ENCODING = "gbk"
 
 # --------------------------#
@@ -17,27 +18,36 @@ ENCODING = "gbk"
 cache: Dict[str, object] = {}
 
 
-def single_instance(cls: type):
-    """
-    单例模式装饰器，如果两个aria2进程一同开启必定端口冲突
-    :param cls: 要装饰的类
-    :return:
-    """
+# def single_instance(cls: type):
+#     """
+#     单例模式装饰器，如果两个aria2进程一同开启必定端口冲突
+#     :param cls: 要装饰的类
+#     :return:
+#     """
+#
+#     @wraps(cls)
+#     def inner(*args, **kw):
+#         class_name = cls.__name__
+#         if class_name in cache:
+#             return cache[class_name]
+#         else:
+#             instance = cls(*args, **kw)
+#             cache[class_name] = instance
+#             return instance
+#     return inner
 
-    @wraps(cls)
-    def inner(*args, **kw):
-        class_name = cls.__name__
-        if class_name in cache:
-            return cache[class_name]
-        else:
-            instance = cls(*args, **kw)
-            cache[class_name] = instance
-            return instance
-    return inner
+
+class SingletonType(type):
+    _instance_lock = threading.Lock()
+
+    def __call__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            with cls._instance_lock:  # 加锁
+                cls._instance = super().__call__(*args, **kwargs)
+        return cls._instance
 
 
-@single_instance
-class Aria2Server:
+class Aria2Server(metaclass=SingletonType):
     """
     aria2进程对象
     """
@@ -93,7 +103,6 @@ class Aria2Server:
             self.terminate()
 
 
-@single_instance
 class AsyncAria2Server(Aria2Server):
     """
     aria2进程对象

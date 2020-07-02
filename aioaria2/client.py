@@ -9,6 +9,14 @@ import aiohttp
 from typing import Dict, Any, List, Union, Callable
 from .exceptions import Aria2rpcException
 from .utils import add_options_and_position, b64encode_file, get_status
+from inspect import iscoroutinefunction
+
+
+async def add_async_callback(task, coro):
+    assert iscoroutinefunction(coro)
+    result = await task
+    await coro(task)
+    return result
 
 
 class _Aria2BaseClient:
@@ -35,7 +43,7 @@ class _Aria2BaseClient:
         self.mode = mode
         self.token = token
 
-    async def jsonrpc(self, method, params: List[Any] = None, prefix='aria2.') -> Dict[str, Any]:
+    async def jsonrpc(self, method: str, params: List[Any] = None, prefix: str = 'aria2.') -> Dict[str, Any]:
         """
         组装json数据
         :param method: 请求方法
@@ -773,12 +781,14 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         轮询返回数据
         :return:
         """
+        # TODO 添加异步回调
         while True:
             task = asyncio.create_task(self.client_session.receive_json())
-            task.add_done_callback(self.event)
+            # task.add_done_callback(self.event)
+            task = add_async_callback(task, self.event)
             await task
 
-    def event(self, future):
+    async def event(self, future):
         """
         基础回调函数 当websocket服务器向客户端发送数据时候 此方法会自动调用
         :param future:
@@ -788,11 +798,17 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         if "result" in data:
             # 等效于post数据的结果
             if "result" in self.functions:
-                self.functions["result"](future)
+                if iscoroutinefunction(self.functions["result"]):
+                    await self.functions["result"](future)
+                else:
+                    self.functions["result"](future)
         if "method" in data:
             method = data["method"]
             if method in self.functions:
-                self.functions[method](future)
+                if iscoroutinefunction(self.functions[method]):
+                    await self.functions[method](future)
+                else:
+                    self.functions[method](future)
 
     def register(self, func: Callable[[asyncio.Task, Any], Any], type: str):
         """

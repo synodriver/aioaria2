@@ -27,7 +27,7 @@ def main():
         packages=find_packages(),
         keywords=["asyncio", "Aria2"],
         description="Support Aria2 rpc client and manage server with async/await",
-        long_description_content_type="text/x-rst",
+        long_description_content_type="text/markdown",
         long_description=dis,
         author=["帝国皇家近卫军", "synodriver"],
         author_email="diguohuangjiajinweijun@gmail.com",
