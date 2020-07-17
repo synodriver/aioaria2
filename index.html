@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Aioaria2 : An async/await wrapper around aria2-json-rpc">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Aioaria2</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/synodriver/aioaria2">View on GitHub</a>
+
+          <h1 id="project_title">Aioaria2</h1>
+          <h2 id="project_tagline">An async/await wrapper around aria2-json-rpc</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/synodriver/aioaria2/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/synodriver/aioaria2/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="提供aria2异步客户端的包" class="anchor" href="#%E6%8F%90%E4%BE%9Baria2%E5%BC%82%E6%AD%A5%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%9A%84%E5%8C%85" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>提供aria2异步客户端的包</h1>
+<h1>
+<a id="本模块提供与aria2异步通信的客户端与管理aria2进程的服务端" class="anchor" href="#%E6%9C%AC%E6%A8%A1%E5%9D%97%E6%8F%90%E4%BE%9B%E4%B8%8Earia2%E5%BC%82%E6%AD%A5%E9%80%9A%E4%BF%A1%E7%9A%84%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%8E%E7%AE%A1%E7%90%86aria2%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%9C%8D%E5%8A%A1%E7%AB%AF" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>本模块提供与aria2异步通信的客户端与管理aria2进程的服务端</h1>
+<p><a href="https://pypi.org/project/aioaria2/">pypi</a></p>
+<h2>
+<a id="使用方法" class="anchor" href="#%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>使用方法：</h2>
+<h3>
+<a id="示例如下" class="anchor" href="#%E7%A4%BA%E4%BE%8B%E5%A6%82%E4%B8%8B" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>示例如下</h3>
+<div class="highlight highlight-source-python"><pre><span class="pl-k">import</span> <span class="pl-s1">aioaria2</span>
+<span class="pl-k">import</span> <span class="pl-s1">asyncio</span>
+<span class="pl-k">from</span> <span class="pl-s1">pprint</span> <span class="pl-k">import</span> <span class="pl-s1">pprint</span>
+<span class="pl-k">async</span> <span class="pl-k">def</span> <span class="pl-en">main</span>():
+    <span class="pl-k">async</span> <span class="pl-k">with</span> <span class="pl-s1">aioaria2</span>.<span class="pl-v">Aria2HttpClient</span>(<span class="pl-s">"id"</span>, <span class="pl-s">"http://192.168.0.107:6800/jsonrpc"</span>, <span class="pl-s">"normal"</span>,
+                                        <span class="pl-s1">token</span><span class="pl-c1">=</span><span class="pl-s">"admin"</span>) <span class="pl-k">as</span> <span class="pl-s1">client</span>:
+        <span class="pl-en">pprint</span>(<span class="pl-k">await</span> <span class="pl-s1">client</span>.<span class="pl-en">getVersion</span>())
+<span class="pl-s1">asyncio</span>.<span class="pl-en">run</span>(<span class="pl-en">main</span>())</pre></div>
+<h3>
+<a id="相关ip地址应该换成自己的" class="anchor" href="#%E7%9B%B8%E5%85%B3ip%E5%9C%B0%E5%9D%80%E5%BA%94%E8%AF%A5%E6%8D%A2%E6%88%90%E8%87%AA%E5%B7%B1%E7%9A%84" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>相关ip地址应该换成自己的</h3>
+<h3>
+<a id="client对象的相关方法见aria2手册" class="anchor" href="#client%E5%AF%B9%E8%B1%A1%E7%9A%84%E7%9B%B8%E5%85%B3%E6%96%B9%E6%B3%95%E8%A7%81aria2%E6%89%8B%E5%86%8C" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>client对象的相关方法见aria2手册</h3>
+<div class="highlight highlight-source-python"><pre><span class="pl-k">import</span> <span class="pl-s1">aioaria2</span>
+<span class="pl-k">import</span> <span class="pl-s1">asyncio</span>
+<span class="pl-k">from</span> <span class="pl-s1">pprint</span> <span class="pl-k">import</span> <span class="pl-s1">pprint</span>
+<span class="pl-k">async</span> <span class="pl-k">def</span> <span class="pl-en">main</span>():
+    <span class="pl-k">async</span> <span class="pl-k">with</span> <span class="pl-s1">aioaria2</span>.<span class="pl-v">Aria2HttpClient</span>(<span class="pl-s">"id"</span>, <span class="pl-s">"http://192.168.0.107:6800/jsonrpc"</span>, <span class="pl-s">"normal"</span>,
+                                        <span class="pl-s1">token</span><span class="pl-c1">=</span><span class="pl-s">"admin"</span>) <span class="pl-k">as</span> <span class="pl-s1">client</span>:
+        <span class="pl-en">pprint</span>(<span class="pl-k">await</span> <span class="pl-s1">client</span>.<span class="pl-en">addUri</span>([<span class="pl-s">"http://www.demo.com"</span>])) <span class="pl-c">#即可下载</span>
+<span class="pl-s1">asyncio</span>.<span class="pl-en">run</span>(<span class="pl-en">main</span>())</pre></div>
+<pre><code>运行该协程函数即可，方法对应aria2jsonrpc的方法
+对于服务端，每一个实例对应一个aria2进程
+</code></pre>
+<div class="highlight highlight-source-python"><pre><span class="pl-k">import</span> <span class="pl-s1">aioaria2</span>
+<span class="pl-k">import</span> <span class="pl-s1">asyncio</span>
+<span class="pl-k">async</span> <span class="pl-k">def</span> <span class="pl-en">main</span>():
+    <span class="pl-s1">server</span> <span class="pl-c1">=</span> <span class="pl-s1">aioaria2</span>.<span class="pl-v">AsyncAria2Server</span>(<span class="pl-s">r"128aria2c.exe"</span>,
+                                       <span class="pl-s">r"--conf-path=aria2.conf"</span>, <span class="pl-s">"--rpc-secret=admin"</span>, <span class="pl-s1">daemon</span><span class="pl-c1">=</span><span class="pl-c1">True</span>)
+    <span class="pl-k">await</span> <span class="pl-s1">server</span>.<span class="pl-en">start</span>()
+    <span class="pl-k">await</span> <span class="pl-s1">server</span>.<span class="pl-en">wait</span>()
+<span class="pl-s1">asyncio</span>.<span class="pl-en">run</span>(<span class="pl-en">main</span>())</pre></div>
+<h4>
+<a id="即可启动一个aria2进程" class="anchor" href="#%E5%8D%B3%E5%8F%AF%E5%90%AF%E5%8A%A8%E4%B8%80%E4%B8%AAaria2%E8%BF%9B%E7%A8%8B" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>即可启动一个aria2进程</h4>
+<p><a href="http://aria2.github.io/manual/en/html/">参考选项及设置</a></p>
+<h3>
+<a id="todolist" class="anchor" href="#todolist" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>todolist</h3>
+<ul>
+<li>[x] 异步http通信</li>
+<li>[x] 异步websocket通信</li>
+<li>[x] 修复server类的bug</li>
+<li>[ ] 单元测试</li>
+</ul>
+<p><a href="https://xyne.archlinux.ca/projects/python3-aria2jsonrpc">jsonrpc</a>
+本模块在其之上构建，提供了异步支持，以级websocket支持</p>
+<h3>
+<a id="windows用户应该加上以下设置" class="anchor" href="#windows%E7%94%A8%E6%88%B7%E5%BA%94%E8%AF%A5%E5%8A%A0%E4%B8%8A%E4%BB%A5%E4%B8%8B%E8%AE%BE%E7%BD%AE" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>windows用户应该加上以下设置</h3>
+<pre><code>asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+asyncio.set_event_loop(asyncio.ProactorEventLoop())
+</code></pre>
+<h4>
+<a id="notice" class="anchor" href="#notice" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Notice</h4>
+<h4>
+<a id="在最终v10发布之前不建议直接setup安装" class="anchor" href="#%E5%9C%A8%E6%9C%80%E7%BB%88v10%E5%8F%91%E5%B8%83%E4%B9%8B%E5%89%8D%E4%B8%8D%E5%BB%BA%E8%AE%AE%E7%9B%B4%E6%8E%A5setup%E5%AE%89%E8%A3%85" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>在最终v1.0发布之前不建议直接setup安装</h4>
+<p><img src="https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg" alt="title"></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Aioaria2 maintained by <a href="https://github.com/synodriver">synodriver</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
