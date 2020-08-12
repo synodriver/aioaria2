@@ -8,7 +8,7 @@ import aiofiles
 JSON_ENCODING = "utf-8"
 
 
-def __init():
+def __init__():
     pass
 
 

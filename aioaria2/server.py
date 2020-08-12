@@ -75,16 +75,17 @@ class Aria2Server(metaclass=SingletonType):
         等待进程结束
         :return:
         """
-        self.process.wait()
+        code = self.process.wait()
         self._is_running = False
+        return code
 
     def terminate(self):
         self.process.terminate()
-        self.wait()
+        return self.wait()
 
     def kill(self):
         self.process.kill()
-        self.wait()
+        return self.wait()
 
     @property
     def pid(self):
@@ -121,16 +122,17 @@ class AsyncAria2Server(Aria2Server):
         self._is_running = True
 
     async def wait(self):
-        await self.process.wait()
+        code = await self.process.wait()
         self._is_running = False
+        return code
 
     async def terminate(self):
         self.process.terminate()
-        await self.wait()
+        return await self.wait()
 
     async def kill(self):
         self.process.kill()
-        await self.wait()
+        return await self.wait()
 
     async def __aenter__(self):
         await self.start()

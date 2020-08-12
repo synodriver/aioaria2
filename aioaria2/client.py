@@ -5,15 +5,16 @@
 参数参考 http://aria2.github.io/manual/en/html/aria2c.html#rpc-interface
 """
 import asyncio
-import aiohttp
+from inspect import iscoroutinefunction, stack
 from typing import Dict, Any, List, Union, Callable
+import warnings
+import aiohttp
 from .exceptions import Aria2rpcException
 from .utils import add_options_and_position, b64encode_file, get_status
-from inspect import iscoroutinefunction
 
 
-async def add_async_callback(task, coro):
-    assert iscoroutinefunction(coro)
+async def add_async_callback(task: asyncio.Task, coro):
+    assert iscoroutinefunction(coro), "callback must be a coroutinefunction"
     result = await task
     await coro(task)
     return result
@@ -86,7 +87,7 @@ class _Aria2BaseClient:
         # self.queue = []
         # return await self.send_request(req_obj)
         results = []
-        while self.queue.qsize():
+        while not self.queue.empty():
             req_obj = await self.queue.get()
             results.append(await self.send_request(req_obj))
         return results
@@ -683,16 +684,16 @@ class Aria2HttpClient(_Aria2BaseClient):
     def __init__(self, identity: str, url: str, mode: str = 'normal', token: str = None, queue=None,
                  client_session: aiohttp.ClientSession = None, **kw):
         """
-            :param identity: 操作rpc接口的id
-            :param url: rpc服务器地址
-            :param mode:
-                normal - 立即处理请求
-                batch - 请求加入队列，由process_queue方法处理
-                format - 返回rpc请求json结构
-            :param token: rpc服务器密码 (用 `--rpc-secret`设置)
-            :param queue: 请求队列
-            :param client_session: aiohttp的session
-            :param kw: aiohttp.session.post的相关参数
+        :param identity: 操作rpc接口的id
+        :param url: rpc服务器地址
+        :param mode:
+            normal - 立即处理请求
+            batch - 请求加入队列，由process_queue方法处理
+            format - 返回rpc请求json结构
+        :param token: rpc服务器密码 (用 `--rpc-secret`设置)
+        :param queue: 请求队列
+        :param client_session: aiohttp的session
+        :param kw: aiohttp.session.post的相关参数
         """
         super().__init__(identity, url, mode, token, queue)
         if client_session:
@@ -717,7 +718,7 @@ class Aria2HttpClient(_Aria2BaseClient):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.client_session.close()
+        await self.close()
 
 
 class Aria2WebsocketTrigger(_Aria2BaseClient):
@@ -734,13 +735,16 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             :param queue: 请求队列
             :param kw: ws_connect()的相关参数
         """
+        if stack()[1].function != "create":
+            warnings.warn(
+                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + "." + "create"))
         super().__init__(identity, url, mode, token, queue)
         self.kw = kw
-        self.functions: Dict[str, Callable[[asyncio.Task], Any]] = {}  # 存放各个notice的回调
+        self.functions: Dict[str, Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]] = {}  # 存放各个notice的回调
 
     @classmethod
-    async def create(cls, identity: str, url: str, mode: str = 'batch', token: str = None, queue: asyncio.Queue = None,
-                     **kw):
+    async def create(cls, identity: str, url: str, mode: str = 'normal', token: str = None, queue: asyncio.Queue = None,
+                     **kw) -> "Aria2WebsocketTrigger":
         """
         真正创建实例
         :param identity: 操作rpc接口的id
@@ -755,43 +759,44 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
                                                                                                         **self.kw)
         return self
 
-    async def start_ws(self):
+    async def start_ws(self) -> None:
         """
-        同时开启异步接受和发送
+        同时开启异步接受和发送,会阻塞当前task
+        self.queue一定部位None,参见基类的__init__
         :return:
         """
-        await asyncio.wait([self.listen(), self.process_queue()])
+        await self.listen()
 
-    async def send_request(self, req_obj: Dict[str, Any]):
+    async def send_request(self, req_obj: Dict[str, Any]) -> None:
         try:
             await self.client_session.send_json(req_obj)
         except Exception as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
 
-    async def process_queue(self):
+    async def process_queue(self) -> None:
         """
-        轮询队列
+        处理队列
         """
-        while True:
+        while not self.queue.empty():
             req_obj = await self.queue.get()
             await self.send_request(req_obj)
 
-    async def listen(self):
+    async def listen(self) -> None:
         """
         轮询返回数据
         :return:
         """
-        # TODO 添加异步回调
+        # TODO 添加异步回调 Done
         while True:
             task = asyncio.create_task(self.client_session.receive_json())
             # task.add_done_callback(self.event)
             task = add_async_callback(task, self.event)
             await task
 
-    async def event(self, future):
+    async def event(self, future: asyncio.Task) -> None:
         """
         基础回调函数 当websocket服务器向客户端发送数据时候 此方法会自动调用
-        :param future:
+        :param future: receive_json包装对象。 显然，与http不同，你得自己过滤result字段
         :return:
         """
         data = future.result()
@@ -799,42 +804,50 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             # 等效于post数据的结果
             if "result" in self.functions:
                 if iscoroutinefunction(self.functions["result"]):
-                    await self.functions["result"](future)
+                    await self.functions["result"](self, future)
                 else:
-                    self.functions["result"](future)
+                    self.functions["result"](self, future)
         if "method" in data:
             method = data["method"]
             if method in self.functions:
                 if iscoroutinefunction(self.functions[method]):
-                    await self.functions[method](future)
+                    await self.functions[method](self, future)
                 else:
-                    self.functions[method](future)
+                    self.functions[method](self, future)
 
-    def register(self, func: Callable[[asyncio.Task, Any], Any], type: str):
+    def register(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any], type_: str) -> None:
         """
+        注册响应websocket的事件
         :return:
         """
-        self.functions[type] = func
+        self.functions[type_] = func
 
-    def onResullt(self, func: Callable[[asyncio.Task], Any]):
+    # ----------以下这些推荐作为装饰器使用---------------------
+
+    def onResullt(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
+        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
         """
         等同于一般post的返回
+        func的第二个参数的task.result()型如{"id":"qwer","jsonrpc":"2.0","result":"2089b05ecca3d829"}
         :param func:
         :return:
         """
         self.register(func, "result")
         return func
 
-    def onDownloadStart(self, func: Callable[[asyncio.Task], Any]):
+    def onDownloadStart(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
+        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
         """
         注册回调事件
+        func的第二个参数的task.result()型如{'jsonrpc': '2.0', 'method': 'aria2.onDownloadStart', 'params': [{'gid': '5de52dc4eba048ca'}]}
         :param func:
         :return:
         """
         self.register(func, "aria2.onDownloadStart")
         return func
 
-    def onDownloadPause(self, func: Callable[[asyncio.Task], Any]):
+    def onDownloadPause(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
+        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
         """
         注册回调事件
         :param func:
@@ -843,7 +856,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadPause")
         return func
 
-    def onDownloadStop(self, func: Callable[[asyncio.Task], Any]):
+    def onDownloadStop(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
+        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
         """
         注册回调事件
         :param func:
@@ -852,7 +866,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadStop")
         return func
 
-    def onDownloadComplete(self, func: Callable[[asyncio.Task], Any]):
+    def onDownloadComplete(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
+        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
         """
         注册回调事件
         :param func:
@@ -861,7 +876,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadComplete")
         return func
 
-    def onDownloadError(self, func: Callable[[asyncio.Task], Any]):
+    def onDownloadError(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
+        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
         """
         注册回调事件
         :param func:
@@ -870,7 +886,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadError")
         return func
 
-    def onBtDownloadComplete(self, func: Callable[[asyncio.Task], Any]):
+    def onBtDownloadComplete(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
+        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
         """
         注册回调事件
         :param func:

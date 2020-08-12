@@ -5,7 +5,7 @@
 from .client import Aria2HttpClient, Aria2WebsocketTrigger
 from .server import Aria2Server, AsyncAria2Server
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = ["synodriver", "帝国皇家近卫军"]
 __all__ = ["Aria2Server", "AsyncAria2Server", "Aria2WebsocketTrigger", "Aria2HttpClient"]
 
