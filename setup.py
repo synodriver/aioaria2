@@ -17,6 +17,9 @@ def get_dis():
         return f.read()
 
 
+packages = find_packages(exclude=('tests', 'tests.*', "test*"))
+
+
 def main():
     version: str = get_version()
 
@@ -24,7 +27,7 @@ def main():
     setup(
         name="aioaria2",
         version=version,
-        packages=find_packages(),
+        packages=packages,
         keywords=["asyncio", "Aria2"],
         description="Support Aria2 rpc client and manage server with async/await",
         long_description_content_type="text/markdown",
@@ -35,7 +38,7 @@ def main():
         python_requires=">=3.6",
         install_requires=["aiohttp", "aiofiles"],
         license='GPLv3',
-        classifilers=[
+        classifiers=[
             "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
             "Programming Language :: Python",
             "Programming Language :: Python :: 3.7",
