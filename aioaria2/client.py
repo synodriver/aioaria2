@@ -759,14 +759,6 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
                                                                                                         **self.kw)
         return self
 
-    async def start_ws(self) -> None:
-        """
-        同时开启异步接受和发送,会阻塞当前task
-        self.queue一定部位None,参见基类的__init__
-        :return:
-        """
-        await self.listen()
-
     async def send_request(self, req_obj: Dict[str, Any]) -> None:
         try:
             await self.client_session.send_json(req_obj)
