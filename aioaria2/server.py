@@ -114,11 +114,8 @@ class AsyncAria2Server(Aria2Server):
         super().__init__(*args, daemon=daemon)
 
     async def start(self):
-        cmd = ""
-        for i in self.cmd:
-            cmd += i + " "
-        # program, *args = self.cmd
-        self.process = await asyncio.create_subprocess_shell(cmd)
+        program, *args = self.cmd
+        self.process = await asyncio.create_subprocess_exec(program, *args)
         self._is_running = True
 
     async def wait(self):

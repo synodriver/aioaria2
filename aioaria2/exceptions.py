@@ -18,7 +18,6 @@ class Aria2rpcException(Exception):
         return '{}: {}'.format(self.__class__.__name__, self.msg)
 
 
-
 def main():
     pass
 

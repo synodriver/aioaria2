@@ -16,20 +16,25 @@ async def callback2(trigger: aioaria2.Aria2WebsocketTrigger, future):
 
 
 async def callback3(trigger: aioaria2.Aria2WebsocketTrigger, future):
+    print("下载中断")
     data = future.result()
     gid = data["params"][0]["gid"]
+    trigger.identity = "getFiles"
     await trigger.getFiles(gid)
+    trigger.identity = "id"
 
 
 async def onresult(trigger, future):
     print("结果")
-    try:
-        data = future.result()["result"]  # 如同http一样的返回     getFiles调用
-        url = data[0]["uris"][0]["uri"]
+    data = future.result()
+    if data['id'] == "getFiles":
+        # 如同http一样的返回     getFiles调用
+        url = data["result"][0]["uris"][0]["uri"]
+        trigger.identity = "addUri"
         await trigger.addUri([url])
-    except TypeError:
-        # addUri返回 data是str,必然进入这个 就是gid
-        print("重新入队成功:{0}".format(data))
+        trigger.identity = "id"
+    elif data['id'] == "addUri":
+        print("重新入队成功:{0}".format(data["result"]))
 
 
 async def get_client():
@@ -51,7 +56,7 @@ async def get_trigger():
     client.onDownloadComplete(callback2)
     client.onDownloadError(callback3)
     client.onResullt(onresult)
-    await client.start_ws()
+    await client.listen()
     pass
 
 

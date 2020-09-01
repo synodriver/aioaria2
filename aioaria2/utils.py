@@ -50,32 +50,20 @@ def get_status(response):
         return 'error'
 
 
-def read_configfile(path: str, prex: str = "--"):
+def read_configfile(path: str, prefix: str = "--"):
     """
     从配置文件中读取可用配置
     :param path: aria2配置文件路径
-    :param prex: yield之前的前缀
+    :param prefix: yield之前的前缀
     :return:
     """
     with open(path, "r") as f:
         for line in f.readlines():
             line = line.strip()
             if line and not line.startswith("#"):
-                temp = prex + line
+                temp = prefix + line
                 yield temp
 
 
 if __name__ == "__main__":
-    # import asyncio
-    #
-    # loop = asyncio.get_event_loop()
-    # task = loop.create_task(b64encode_file(
-    #     "F:\jhc\PanDownload\[kisssub.org][Moozzi2] 国家队比翼之吻 Darling in the Franxx 1-24 (BD 1920x1080 x.264 FLACx2).torrent"))
-    # loop.run_until_complete(task)
-    # print(task.result())
-    # with open("F:\jhc\PanDownload\[kisssub.org][Moozzi2] 国家队比翼之吻 Darling in the Franxx 1-24 (BD 1920x1080 x.264 FLACx2).torrent","rb") as f:
-    #     a=f.read()
-    #     b=base64.b64encode(a)
-    #     c=b.encode("utf-8")
-    #     pass
     pass

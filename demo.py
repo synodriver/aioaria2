@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import aioaria2
+import shlex
 from queue import Queue
 
 q = asyncio.Queue()
