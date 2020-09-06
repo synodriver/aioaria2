@@ -63,6 +63,13 @@ asyncio.set_event_loop(asyncio.ProactorEventLoop())
 新增Aria2WebsocketTrigger类，可以监听websocket消息,
 使用on*方法注册自定义回调函数,既可以是同步也可以是异步的
 
+如下
+```
+@trigger.onDownloadStart
+async def onDownloadStart(trigger, future):
+    print("下载开始{0}".format(future.result()))
+```
+
 
 
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)
