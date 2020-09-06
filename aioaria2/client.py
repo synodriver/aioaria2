@@ -13,10 +13,10 @@ from .exceptions import Aria2rpcException
 from .utils import add_options_and_position, b64encode_file, get_status
 
 
-async def add_async_callback(task: asyncio.Task, coro):
-    assert iscoroutinefunction(coro), "callback must be a coroutinefunction"
+async def add_async_callback(task: asyncio.Task, callback):
+    assert iscoroutinefunction(callback), "callback must be a coroutinefunction"
     result = await task
-    await coro(task)
+    await callback(task)
     return result
 
 
