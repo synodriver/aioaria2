@@ -60,7 +60,7 @@ python3.8以后默认是ProactorEventLoop因此可以不用修改
 #### Notice
 ##### 在最终v1.0发布之前不建议直接setup安装
 
-#### v1.2更新
+#### v1.2.0更新
 新增Aria2WebsocketTrigger类，可以监听websocket消息,
 使用on*方法注册自定义回调函数,既可以是同步也可以是异步的
 
@@ -70,7 +70,7 @@ python3.8以后默认是ProactorEventLoop因此可以不用修改
 async def onDownloadStart(trigger, future):
     print("下载开始{0}".format(future.result()))
 ```
-#### 1.2.3更新
+#### v1.2.3更新
 可以给一个事件注册多个回调,现在只能是协程函数,同步函数需要自行从utils.run_sync包装
 ```
 @trigger.onDownloadStart
