@@ -56,6 +56,7 @@ asyncio.run(main())
 asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 asyncio.set_event_loop(asyncio.ProactorEventLoop())
 ```
+python3.8以后默认是ProactorEventLoop因此可以不用修改
 #### Notice
 ##### 在最终v1.0发布之前不建议直接setup安装
 
@@ -69,7 +70,17 @@ asyncio.set_event_loop(asyncio.ProactorEventLoop())
 async def onDownloadStart(trigger, future):
     print("下载开始{0}".format(future.result()))
 ```
+#### 1.2.3更新
+可以给一个事件注册多个回调,现在只能是协程函数,同步函数需要自行从utils.run_sync包装
+```
+@trigger.onDownloadStart
+async def callback1(trigger, future):
+    print("第一个回调{0}".format(future.result()))
 
-
+@trigger.onDownloadStart
+@run_sync
+def callback2(trigger, future):
+    print("第二个回调{0}".format(future.result()))
+```
 
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)

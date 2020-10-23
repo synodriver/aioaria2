@@ -4,7 +4,7 @@ import asyncio
 import time
 from pprint import pprint
 
-HOST = 'http://aria.blackjoe.art:2082/jsonrpc'  # "http://192.168.0.107:6800/jsonrpc"
+HOST = 'http://aria.blackjoe.art:2082/jsonrpc'
 
 
 async def callback(trigger, future):
@@ -48,14 +48,14 @@ async def get_client():
 
 
 async def get_trigger():
-    client = await aioaria2.Aria2WebsocketTrigger.new("test", "http://synodriver.asuscomm.com:6800/jsonrpc",
-                                                                token="adman")
+    client = await aioaria2.Aria2WebsocketTrigger.new("test", HOST,
+                                                                token="a489451594cda0792df1")
     # client=aioaria2.Aria2WebsocketTrigger("id", HOST,token="adman",)
     client.onDownloadStart(callback)
     client.onDownloadStart(callback2)
-    # client.onDownloadComplete(callback2)
-    # client.onDownloadError(callback3)
-    # client.onResullt(onresult)
+    client.onDownloadComplete(callback2)
+    client.onDownloadError(callback3)
+    client.onResullt(onresult)
     start = time.time()
     try:
         await client.listen()
