@@ -5,19 +5,18 @@
 参数参考 http://aria2.github.io/manual/en/html/aria2c.html#rpc-interface
 """
 import asyncio
-from inspect import iscoroutinefunction, stack
-from typing import Dict, Any, List, Union, Callable
+from collections import defaultdict
+from inspect import stack
+from typing import Dict, Any, List, Union, Callable, DefaultDict
 import warnings
+
 import aiohttp
+
 from .exceptions import Aria2rpcException
-from .utils import add_options_and_position, b64encode_file, get_status
-
-
-async def add_async_callback(task: asyncio.Task, callback):
-    assert iscoroutinefunction(callback), "callback must be a coroutinefunction"
-    result = await task
-    await callback(task)
-    return result
+from .utils import (add_options_and_position,
+                    b64encode_file,
+                    get_status,
+                    add_async_callback)
 
 
 class _Aria2BaseClient:
@@ -722,7 +721,10 @@ class Aria2HttpClient(_Aria2BaseClient):
 
 
 class Aria2WebsocketTrigger(_Aria2BaseClient):
-    def __init__(self, identity: str, url: str, mode: str = 'batch', token=None, queue: asyncio.Queue = None,
+    def __init__(self, identity: str,
+                 url: str, mode: str = 'batch',
+                 token=None,
+                 queue: asyncio.Queue = None,
                  **kw):
         """
             :param identity: 操作rpc接口的id
@@ -735,18 +737,24 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             :param queue: 请求队列
             :param kw: ws_connect()的相关参数
         """
-        if stack()[1].function != "create":
+        if stack()[1].function != "new":
             warnings.warn(
-                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + "." + "create"))
+                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + "." + "new"))
         super().__init__(identity, url, mode, token, queue)
         self.kw = kw
-        self.functions: Dict[str, Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]] = {}  # 存放各个notice的回调
+        self.functions: DefaultDict[str, List[Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]]] = defaultdict(
+            list)  # 存放各个notice的回调
+        self._closed = False
 
     @classmethod
-    async def create(cls, identity: str, url: str, mode: str = 'normal', token: str = None, queue: asyncio.Queue = None,
-                     **kw) -> "Aria2WebsocketTrigger":
+    async def new(cls, identity: str,
+                  url: str, mode: str = 'normal',
+                  token: str = None,
+                  queue: asyncio.Queue = None,
+                  **kw) -> "Aria2WebsocketTrigger":
         """
         真正创建实例
+        :param queue: 继承下来的任务队列
         :param identity: 操作rpc接口的id
         :param url:  rpc服务器地址
         :param mode:
@@ -765,6 +773,10 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         except Exception as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
 
+    async def close(self):
+        self._closed = True
+        await super().close()
+
     async def process_queue(self) -> None:
         """
         处理队列
@@ -779,7 +791,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         # TODO 添加异步回调 Done
-        while True:
+        while not self._closed:
             task = asyncio.create_task(self.client_session.receive_json())
             # task.add_done_callback(self.event)
             task = add_async_callback(task, self.event)
@@ -791,28 +803,24 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :param future: receive_json包装对象。 显然，与http不同，你得自己过滤result字段
         :return:
         """
+        # 1.2.3更新:回调只能是异步函数了,同一种可以注册多个方法,同步的需要用run_sync包装
         data = future.result()
         if "result" in data:
             # 等效于post数据的结果
             if "result" in self.functions:
-                if iscoroutinefunction(self.functions["result"]):
-                    await self.functions["result"](self, future)
-                else:
-                    self.functions["result"](self, future)
+                await asyncio.gather(*map(lambda x: x(self, future), self.functions["result"]))
         if "method" in data:
+            # 来自aria2的notice信息
             method = data["method"]
             if method in self.functions:
-                if iscoroutinefunction(self.functions[method]):
-                    await self.functions[method](self, future)
-                else:
-                    self.functions[method](self, future)
+                await asyncio.gather(*map(lambda x: x(self, future), self.functions[method]))
 
     def register(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any], type_: str) -> None:
         """
         注册响应websocket的事件
         :return:
         """
-        self.functions[type_] = func
+        self.functions[type_].append(func)
 
     # ----------以下这些推荐作为装饰器使用---------------------
 

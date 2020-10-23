@@ -1,25 +1,38 @@
-# -*- coding: utf-8 -*-
+import unittest
 import asyncio
 
-
-async def my_callback(result):
-    print("my_callback got:", result)
-    return "My return value is ignored"
+import aioaria2
 
 
-async def coro(number):
-    await asyncio.sleep(number)
-    return number + 1
+class TestWebsocket(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        self.client = aioaria2.Aria2HttpClient("test", "http://synodriver.asuscomm.com:6800/jsonrpc",
+                                               token="adman")
+        self.trigger = await aioaria2.Aria2WebsocketTrigger.new("test", "http://synodriver.asuscomm.com:6800/jsonrpc",
+                                                                token="adman")
+        asyncio.get_running_loop().create_task(self.trigger.listen())
+
+    async def test_onDownloadStart(self):
+        await self.client.addUri(["https://www.google.com"])
+
+        @self.trigger.onDownloadStart
+        async def handeler(trigger, task):
+            data = task.result()
+            print("我是1号回调,我收到了消息")
+            self.assertEqual(data["method"], "aria2.onDownloadStart",
+                             "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadStart", data["method"]))
+
+        @self.trigger.onDownloadStart
+        async def handeler(trigger, task):
+            data = task.result()
+            print("我是2号回调,我收到了消息")
+            self.assertEqual(data["method"], "aria2.onDownloadStart",
+                             "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadStart", data["method"]))
+
+    async def asyncTearDown(self) -> None:
+        await self.trigger.close()
+        await self.client.close()
 
 
-async def add_success_callback(fut, callback):
-    result = await fut
-    await callback(result)
-    return result
-
-
-# loop = asyncio.get_event_loop()
-# task = asyncio.ensure_future(coro(1))
-task = add_success_callback(coro(1), my_callback)
-response = asyncio.run(task)
-print("response:", response)
+if __name__ == '__main__':
+    unittest.main()

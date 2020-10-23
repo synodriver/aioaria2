@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import aioaria2
 import asyncio
+import time
 from pprint import pprint
 
-HOST = "http://192.168.0.107:6800/jsonrpc"
+HOST = 'http://aria.blackjoe.art:2082/jsonrpc'  # "http://192.168.0.107:6800/jsonrpc"
 
 
 async def callback(trigger, future):
@@ -39,7 +40,7 @@ async def onresult(trigger, future):
 
 async def get_client():
     async with aioaria2.Aria2HttpClient("id", HOST, "normal",
-                                        token="adman") as client:
+                                        token="a489451594cda0792df1") as client:
         # pprint(await client.addUri(["http://odrive.aptx.xin/%E5%8A%A8%E7%94%BB/2004/200445.zip"]))
         pprint(await client.getVersion())
 
@@ -47,16 +48,21 @@ async def get_client():
 
 
 async def get_trigger():
-    client = await aioaria2.Aria2WebsocketTrigger.create("id",
-                                                         HOST,
-                                                         token="adman",
-                                                         )
+    client = await aioaria2.Aria2WebsocketTrigger.new("test", "http://synodriver.asuscomm.com:6800/jsonrpc",
+                                                                token="adman")
     # client=aioaria2.Aria2WebsocketTrigger("id", HOST,token="adman",)
     client.onDownloadStart(callback)
-    client.onDownloadComplete(callback2)
-    client.onDownloadError(callback3)
-    client.onResullt(onresult)
-    await client.listen()
+    client.onDownloadStart(callback2)
+    # client.onDownloadComplete(callback2)
+    # client.onDownloadError(callback3)
+    # client.onResullt(onresult)
+    start = time.time()
+    try:
+        await client.listen()
+    except:
+        end = time.time() - start
+        print(end)
+        raise
     pass
 
 

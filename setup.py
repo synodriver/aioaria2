@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from setuptools import setup, find_packages
 import os
 import re
+
+from setuptools import setup, find_packages
 
 
 def get_version() -> str:
@@ -17,7 +18,7 @@ def get_dis():
         return f.read()
 
 
-packages = find_packages(exclude=('tests', 'tests.*', "test*"))
+packages = find_packages(exclude=('test', 'tests.*', "test*"))
 
 
 def main():
@@ -27,12 +28,13 @@ def main():
     setup(
         name="aioaria2",
         version=version,
+        url="https://github.com/synodriver/aioaria2",
         packages=packages,
         keywords=["asyncio", "Aria2"],
         description="Support Aria2 rpc client and manage server with async/await",
         long_description_content_type="text/markdown",
         long_description=dis,
-        author=["帝国皇家近卫军", "synodriver"],
+        author="synodriver",
         author_email="diguohuangjiajinweijun@gmail.com",
         maintainer="v-vinson",
         python_requires=">=3.6",
@@ -42,6 +44,7 @@ def main():
             "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
             "Programming Language :: Python",
             "Programming Language :: Python :: 3.7",
+            "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: Implementation :: CPython"
         ],
         include_package_data=True

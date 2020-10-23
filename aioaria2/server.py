@@ -5,7 +5,6 @@
 
 import os
 import subprocess
-from typing import Dict
 import asyncio
 import threading
 
@@ -14,8 +13,8 @@ import threading
 ENCODING = "gbk"
 
 # --------------------------#
-
-cache: Dict[str, object] = {}
+#
+# cache: Dict[str, object] = {}
 
 
 # def single_instance(cls: type):

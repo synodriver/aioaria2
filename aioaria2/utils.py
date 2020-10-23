@@ -3,6 +3,10 @@
 本模块存放工具函数
 """
 import base64
+import asyncio
+from functools import wraps, partial
+from typing import Callable, Any, Awaitable
+
 import aiofiles
 
 JSON_ENCODING = "utf-8"
@@ -10,6 +14,29 @@ JSON_ENCODING = "utf-8"
 
 def __init__():
     pass
+
+
+def run_sync(func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
+    """
+    一个用于包装 sync function 为 async function 的装饰器
+    :param func:
+    :return:
+    """
+    @wraps(func)
+    async def _wrapper(*args: Any, **kwargs: Any) -> Any:
+        loop = asyncio.get_running_loop()
+        pfunc = partial(func, *args, **kwargs)
+        result = await loop.run_in_executor(None, pfunc)
+        return result
+
+    return _wrapper
+
+
+async def add_async_callback(task: asyncio.Task, callback):
+    assert asyncio.iscoroutinefunction(callback), "callback must be a coroutinefunction"
+    result = await task
+    await callback(task)
+    return result
 
 
 def add_options_and_position(params, options=None, position=None):
