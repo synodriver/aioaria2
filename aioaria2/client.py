@@ -824,7 +824,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
 
     # ----------以下这些推荐作为装饰器使用---------------------
 
-    def onResullt(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
+    def onResult(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
         ['Aria2WebsocketTrigger', asyncio.Task], Any]:
         """
         等同于一般post的返回
