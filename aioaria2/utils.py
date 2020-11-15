@@ -2,12 +2,15 @@
 """
 本模块存放工具函数
 """
+import sys
 import base64
 import asyncio
 from functools import wraps, partial
-from typing import Callable, Any, Awaitable
+from typing import Callable, Any, Awaitable, Dict
 
 import aiofiles
+
+from .exceptions import Aria2rpcException
 
 JSON_ENCODING = "utf-8"
 
@@ -16,12 +19,60 @@ def __init__():
     pass
 
 
+class ResultStore:
+    """
+    websocket 结果缓存类
+    """
+    _id = 1  # jsonrpc的id
+    _futures: Dict[int, asyncio.Future] = {}  # 暂存id对应的未来对象
+
+    @classmethod
+    def get_id(cls) -> int:
+        """
+        jsonrpc的自增id 默认的id生成工厂函数
+        :return:
+        """
+        s = cls._id
+        cls._id = (cls._id + 1) % sys.maxsize
+        return s
+
+    @classmethod
+    def add_result(cls, result: Dict[str, Any]):
+        """
+        收到websocket消息的时候,用这个类存储结果
+        :param result: jsonrpc的回复格式 {'id':str,'jsonrpc','2.0'}
+        :return:
+        """
+        if isinstance(result, dict):
+            future = cls._futures.get(result["id"])
+            if future:
+                future.set_result(result)
+
+    @classmethod
+    async def fetch(cls, id_: int, timeout: float = None) -> Dict[str, Any]:
+        """
+        返回暂存在本类中的结果
+        :param id_:
+        :param timeout:
+        :return:
+        """
+        future = asyncio.get_event_loop().create_future()
+        cls._futures[id_] = future
+        try:
+            return await asyncio.wait_for(future, timeout)
+        except asyncio.TimeoutError:
+            raise Aria2rpcException("jsonrpc over websocket call timeout") from None
+        finally:
+            del cls._futures[id_]
+
+
 def run_sync(func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
     """
     一个用于包装 sync function 为 async function 的装饰器
     :param func:
     :return:
     """
+
     @wraps(func)
     async def _wrapper(*args: Any, **kwargs: Any) -> Any:
         loop = asyncio.get_running_loop()
