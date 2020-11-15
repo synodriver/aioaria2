@@ -39,7 +39,7 @@ async def onresult(trigger, future):
 
 
 async def get_client():
-    async with aioaria2.Aria2HttpClient("id", HOST, "normal",
+    async with aioaria2.Aria2HttpClient(HOST,
                                         token="a489451594cda0792df1") as client:
         # pprint(await client.addUri(["http://odrive.aptx.xin/%E5%8A%A8%E7%94%BB/2004/200445.zip"]))
         pprint(await client.getVersion())
@@ -71,4 +71,4 @@ def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(get_trigger())
+    asyncio.run(get_client())

@@ -38,6 +38,22 @@ class TestWebsocket(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(data["method"], "aria2.onDownloadStart",
                              "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadStart", data["method"]))
 
+    async def test_onDownloadStop(self):
+        @self.trigger.onDownloadStop
+        async def handeler(trigger, task):
+            data = task.result()
+            print("我是3号回调,我收到了消息")
+            self.assertEqual(data["method"], "aria2.onDownloadStop",
+                             "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadSStop", data["method"]))
+
+        @self.trigger.onDownloadStop
+        @aioaria2.run_sync
+        def handeler(trigger, task):
+            data = task.result()
+            print("我是4号回调,我收到了消息")
+            self.assertEqual(data["method"], "aria2.onDownloadStop",
+                             "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadStop", data["method"]))
+
     async def asyncTearDown(self) -> None:
         await self.trigger.close()
 
