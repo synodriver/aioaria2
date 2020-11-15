@@ -2,9 +2,9 @@
 """
 本模块提供aria2 json rpc的异步io交互接口 和aria2进程的管理器
 """
-from .client import Aria2HttpClient, Aria2WebsocketTrigger
-from .server import Aria2Server, AsyncAria2Server
-from .utils import run_sync
+from aioaria2.client import Aria2HttpClient, Aria2WebsocketTrigger
+from aioaria2.server import Aria2Server, AsyncAria2Server
+from aioaria2.utils import run_sync
 
 __version__ = "1.2.3"
 __author__ = ["synodriver", "帝国皇家近卫军"]

@@ -48,22 +48,17 @@ async def get_client():
 
 
 async def get_trigger():
-    client = await aioaria2.Aria2WebsocketTrigger.new("test", HOST,
-                                                                token="a489451594cda0792df1")
+    async with await aioaria2.Aria2WebsocketTrigger.new(HOST, token="a489451594cda0792df1") as client:
     # client=aioaria2.Aria2WebsocketTrigger("id", HOST,token="adman",)
-    client.onDownloadStart(callback)
-    client.onDownloadStart(callback2)
-    client.onDownloadComplete(callback2)
-    client.onDownloadError(callback3)
-    client.onResullt(onresult)
-    start = time.time()
-    try:
-        await client.listen()
-    except:
-        end = time.time() - start
-        print(end)
-        raise
-    pass
+        pprint(await client.getVersion())
+        pprint(await client.addUri(["https://www.google.com"]))
+        client.onDownloadStart(callback)
+        client.onDownloadStart(callback2)
+        client.onDownloadComplete(callback2)
+        client.onDownloadError(callback3)
+        start = time.time()
+        await asyncio.sleep(100)
+        pass
 
 
 def main():
@@ -76,4 +71,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(get_trigger())

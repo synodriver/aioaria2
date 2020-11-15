@@ -1,19 +1,27 @@
 import unittest
 import asyncio
-
+from pprint import pprint
 import aioaria2
 
 
 class TestWebsocket(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.client = aioaria2.Aria2HttpClient("test", "http://aria.blackjoe.art:2082/jsonrpc",
-                                               token="a489451594cda0792df1")
-        self.trigger = await aioaria2.Aria2WebsocketTrigger.new("test", "http://aria.blackjoe.art:2082/jsonrpc",
+        # self.client = aioaria2.Aria2HttpClient("test", "http://aria.blackjoe.art:2082/jsonrpc",
+        #                                        token="a489451594cda0792df1")
+        self.trigger = await aioaria2.Aria2WebsocketTrigger.new("http://aria.blackjoe.art:2082/jsonrpc",
                                                                 token="a489451594cda0792df1")
-        asyncio.get_running_loop().create_task(self.trigger.listen())
+        # asyncio.get_running_loop().create_task(self.trigger.listen())
+
+    async def test_connect(self):
+        data = await self.trigger.getVersion()
+        pprint(data)
+
+        self.assertTrue(isinstance(data, dict))
 
     async def test_onDownloadStart(self):
-        await self.client.addUri(["https://www.google.com"])
+        data = await self.trigger.addUri(["https://www.google.com"])
+        pprint(data)
+        self.assertTrue(isinstance(data, str), data)
 
         @self.trigger.onDownloadStart
         async def handeler(trigger, task):
@@ -32,7 +40,6 @@ class TestWebsocket(unittest.IsolatedAsyncioTestCase):
 
     async def asyncTearDown(self) -> None:
         await self.trigger.close()
-        await self.client.close()
 
 
 if __name__ == '__main__':

@@ -12,21 +12,30 @@ import warnings
 
 import aiohttp
 
-from .exceptions import Aria2rpcException
-from .utils import (add_options_and_position,
-                    b64encode_file,
-                    get_status,
-                    add_async_callback)
+from aioaria2.exceptions import Aria2rpcException
+from aioaria2.utils import (add_options_and_position,
+                            b64encode_file,
+                            get_status,
+                            add_async_callback,
+                            ResultStore)
+from aioaria2.typing import CallBack, IdFactory
 
+
+# TODO 更改为绝对import
 
 class _Aria2BaseClient:
     """
     与jsonrpc通信的接口
     """
 
-    def __init__(self, identity: str, url: str, mode: str = 'normal', token: str = None, queue: asyncio.Queue = None):
+    def __init__(self,
+                 url: str,
+                 identity: IdFactory = None,
+                 mode: str = 'normal',
+                 token: str = None,
+                 queue: asyncio.Queue = None):
         """
-            :param identity: 操作rpc接口的id
+            :param identity: 操作rpc接口的id 生成他的工厂函数
             :param url: rpc服务器地址
             :param mode:
                 normal - 立即处理请求
@@ -38,7 +47,7 @@ class _Aria2BaseClient:
             self.queue = asyncio.Queue()
         else:
             self.queue = queue
-        self.identity = identity
+        self.identity = identity or ResultStore.get_id
         self.url = url
         self.mode = mode
         self.token = token
@@ -67,7 +76,7 @@ class _Aria2BaseClient:
 
         req_obj = {
             'jsonrpc': '2.0',
-            'id': self.identity,
+            'id': self.identity(),
             'method': prefix + method,
             'params': params,
         }
@@ -680,8 +689,14 @@ class _Aria2BaseClient:
 
 
 class Aria2HttpClient(_Aria2BaseClient):
-    def __init__(self, identity: str, url: str, mode: str = 'normal', token: str = None, queue=None,
-                 client_session: aiohttp.ClientSession = None, **kw):
+    def __init__(self,
+                 url: str,
+                 identity: IdFactory = None,
+                 mode: str = 'normal',
+                 token: str = None,
+                 queue=None,
+                 client_session: aiohttp.ClientSession = None,
+                 **kw):
         """
         :param identity: 操作rpc接口的id
         :param url: rpc服务器地址
@@ -694,11 +709,8 @@ class Aria2HttpClient(_Aria2BaseClient):
         :param client_session: aiohttp的session
         :param kw: aiohttp.session.post的相关参数
         """
-        super().__init__(identity, url, mode, token, queue)
-        if client_session:
-            self.client_session = client_session  # aiohttp的会话
-        else:
-            self.client_session = aiohttp.ClientSession()
+        super().__init__(url, identity, mode, token, queue)
+        self.client_session = client_session or aiohttp.ClientSession()  # aiohttp的会话
         self.kw = kw
 
     async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
@@ -721,13 +733,15 @@ class Aria2HttpClient(_Aria2BaseClient):
 
 
 class Aria2WebsocketTrigger(_Aria2BaseClient):
-    def __init__(self, identity: str,
-                 url: str, mode: str = 'batch',
+    def __init__(self,
+                 url: str,
+                 identity: IdFactory = None,
+                 mode: str = 'normal',
                  token=None,
                  queue: asyncio.Queue = None,
                  **kw):
         """
-            :param identity: 操作rpc接口的id
+            :param identity: 操作rpc接口的id 工厂函数
             :param url: rpc服务器地址
             :param mode:
                 normal - 立即处理请求
@@ -737,18 +751,19 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             :param queue: 请求队列
             :param kw: ws_connect()的相关参数
         """
-        if stack()[1].function != "new":
+        if (stack()[1].function) not in ("new", "eval_in_context"):
             warnings.warn(
                 "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + "." + "new"))
-        super().__init__(identity, url, mode, token, queue)
+        super().__init__(url, identity, mode, token, queue)
         self.kw = kw
-        self.functions: DefaultDict[str, List[Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]]] = defaultdict(
-            list)  # 存放各个notice的回调
+        self.functions: DefaultDict[str, List[CallBack]] = defaultdict(list)  # 存放各个notice的回调
         self._closed = False
 
     @classmethod
-    async def new(cls, identity: str,
-                  url: str, mode: str = 'normal',
+    async def new(cls,
+                  url: str,
+                  identity: IdFactory = None,
+                  mode: str = 'normal',
                   token: str = None,
                   queue: asyncio.Queue = None,
                   **kw) -> "Aria2WebsocketTrigger":
@@ -757,33 +772,35 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :param queue: 继承下来的任务队列
         :param identity: 操作rpc接口的id
         :param url:  rpc服务器地址
-        :param mode:
+        :param mode: 同上
         :param token: rpc服务器密码 (用 `--rpc-secret`设置)
         :param kw: ws_connect()的相关参数
         :return: 真正的实例
         """
-        self = cls(identity, url, mode, token, queue, **kw)
-        self.client_session: aiohttp.ClientWebSocketResponse = await aiohttp.ClientSession().ws_connect(self.url,
-                                                                                                        **self.kw)
+        self = cls(url, identity, mode, token, queue, **kw)
+        self._client_session = aiohttp.ClientSession()
+        self.client_session: aiohttp.ClientWebSocketResponse = await self._client_session.ws_connect(self.url,
+                                                                                                     **self.kw)
+        asyncio.create_task(self.listen())
         return self
 
-    async def send_request(self, req_obj: Dict[str, Any]) -> None:
+    async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
         try:
             await self.client_session.send_json(req_obj)
+            data = await ResultStore.fetch(req_obj["id"], self.kw.get("timeout", None) or 10.0)
+            return data["result"]
+            # TODO: 改写为随机id工厂 id参数就是个工厂函数 if没有就按照ResultStore里面的来吧
+        except KeyError:  # 'error':xxx
+            raise Aria2rpcException('unexpected result: {}'.format(data))
+        except Aria2rpcException:
+            raise
         except Exception as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
 
     async def close(self):
         self._closed = True
         await super().close()
-
-    async def process_queue(self) -> None:
-        """
-        处理队列
-        """
-        while not self.queue.empty():
-            req_obj = await self.queue.get()
-            await self.send_request(req_obj)
+        await self._client_session.close()
 
     async def listen(self) -> None:
         """
@@ -794,10 +811,10 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         while not self._closed:
             task = asyncio.create_task(self.client_session.receive_json())
             # task.add_done_callback(self.event)
-            task = add_async_callback(task, self.event)
+            task = add_async_callback(task, self.handle_event)
             await task
 
-    async def event(self, future: asyncio.Task) -> None:
+    async def handle_event(self, future: asyncio.Task) -> None:
         """
         基础回调函数 当websocket服务器向客户端发送数据时候 此方法会自动调用
         :param future: receive_json包装对象。 显然，与http不同，你得自己过滤result字段
@@ -807,15 +824,16 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         data = future.result()
         if "result" in data:
             # 等效于post数据的结果
-            if "result" in self.functions:
-                await asyncio.gather(*map(lambda x: x(self, future), self.functions["result"]))
+            ResultStore.add_result(data)
+            # if "result" in self.functions:
+            #     await asyncio.gather(*map(lambda x: x(self, future), self.functions["result"]))
         if "method" in data:
             # 来自aria2的notice信息
             method = data["method"]
             if method in self.functions:
                 await asyncio.gather(*map(lambda x: x(self, future), self.functions[method]))
 
-    def register(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any], type_: str) -> None:
+    def register(self, func: CallBack, type_: str) -> None:
         """
         注册响应websocket的事件
         :return:
@@ -824,19 +842,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
 
     # ----------以下这些推荐作为装饰器使用---------------------
 
-    def onResult(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
-        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
-        """
-        等同于一般post的返回
-        func的第二个参数的task.result()型如{"id":"qwer","jsonrpc":"2.0","result":"2089b05ecca3d829"}
-        :param func:
-        :return:
-        """
-        self.register(func, "result")
-        return func
-
-    def onDownloadStart(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
-        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
+    def onDownloadStart(self, func: CallBack) -> CallBack:
         """
         注册回调事件
         func的第二个参数的task.result()型如{'jsonrpc': '2.0', 'method': 'aria2.onDownloadStart', 'params': [{'gid': '5de52dc4eba048ca'}]}
@@ -846,8 +852,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadStart")
         return func
 
-    def onDownloadPause(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
-        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
+    def onDownloadPause(self, func: CallBack) -> CallBack:
         """
         注册回调事件
         :param func:
@@ -856,8 +861,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadPause")
         return func
 
-    def onDownloadStop(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
-        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
+    def onDownloadStop(self, func: CallBack) -> CallBack:
         """
         注册回调事件
         :param func:
@@ -866,8 +870,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadStop")
         return func
 
-    def onDownloadComplete(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
-        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
+    def onDownloadComplete(self, func: CallBack) -> CallBack:
         """
         注册回调事件
         :param func:
@@ -876,8 +879,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadComplete")
         return func
 
-    def onDownloadError(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
-        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
+    def onDownloadError(self, func: CallBack) -> CallBack:
         """
         注册回调事件
         :param func:
@@ -886,8 +888,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.register(func, "aria2.onDownloadError")
         return func
 
-    def onBtDownloadComplete(self, func: Callable[['Aria2WebsocketTrigger', asyncio.Task], Any]) -> Callable[
-        ['Aria2WebsocketTrigger', asyncio.Task], Any]:
+    def onBtDownloadComplete(self, func: CallBack) -> CallBack:
         """
         注册回调事件
         :param func:
@@ -895,6 +896,18 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         """
         self.register(func, "aria2.onBtDownloadComplete")
         return func
+
+    async def __aenter__(self):
+        if not hasattr(self, "client_session"):
+            self._client_session = aiohttp.ClientSession()
+            self.client_session: aiohttp.ClientWebSocketResponse = await self._client_session.ws_connect(self.url,
+                                                                                                         **self.kw)
+            asyncio.create_task(self.listen())
+            return self
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
 
 
 if __name__ == "__main__":

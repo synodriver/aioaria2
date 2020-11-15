@@ -10,7 +10,7 @@ from typing import Callable, Any, Awaitable, Dict
 
 import aiofiles
 
-from .exceptions import Aria2rpcException
+from aioaria2.exceptions import Aria2rpcException
 
 JSON_ENCODING = "utf-8"
 
@@ -37,33 +37,41 @@ class ResultStore:
         return s
 
     @classmethod
-    def add_result(cls, result: Dict[str, Any]):
+    def add_result(cls, result: Dict[str, Any]) -> None:
         """
-        收到websocket消息的时候,用这个类存储结果
-        :param result: jsonrpc的回复格式 {'id':str,'jsonrpc','2.0'}
+        收到websocket消息的时候,用这个类存储结果 表示一次特定的请求返回了
+        :param result: jsonrpc的回复格式 {'id':int,'jsonrpc','2.0','result':xxx}
         :return:
         """
         if isinstance(result, dict):
             future = cls._futures.get(result["id"])
             if future:
                 future.set_result(result)
+            else:
+                # 没有这个future fetch没有被调用 future=None
+                future = asyncio.get_event_loop().create_future()
+                cls._futures[result["id"]] = future
+                future.set_result(result)
 
     @classmethod
-    async def fetch(cls, id_: int, timeout: float = None) -> Dict[str, Any]:
+    async def fetch(cls, identity: int, timeout: float = None) -> Dict[str, Any]:
         """
         返回暂存在本类中的结果
-        :param id_:
-        :param timeout:
-        :return:
+        :param identity: jsonrpc返回的id
+        :param timeout: 等待结果超时
+        :return: 返回完整的jsonrpc 返回数据而不是仅仅有result字段 判断在后续来处理
         """
-        future = asyncio.get_event_loop().create_future()
-        cls._futures[id_] = future
+        if cls._futures.get(identity):  # 已经存在这个id的future了 不用创建了
+            future = cls._futures[identity]
+        else:
+            future = asyncio.get_event_loop().create_future()  # TODO 那边send之后需要立即fetch不然没有future对象 改一改
+            cls._futures[identity] = future
         try:
             return await asyncio.wait_for(future, timeout)
         except asyncio.TimeoutError:
             raise Aria2rpcException("jsonrpc over websocket call timeout") from None
         finally:
-            del cls._futures[id_]
+            del cls._futures[identity]
 
 
 def run_sync(func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
