@@ -45,7 +45,7 @@ asyncio.run(main())
 - [x] 异步http通信
 - [x] 异步websocket通信
 - [x] 修复server类的bug
-- [ ] 单元测试
+- [x] 单元测试
 
 
 [jsonrpc](https://xyne.archlinux.ca/projects/python3-aria2jsonrpc)
@@ -82,5 +82,20 @@ async def callback1(trigger, future):
 def callback2(trigger, future):
     print("第二个回调{0}".format(future.result()))
 ```
+#### v1.3.0更新
+*本版本大量修改了Aria2WebsocketTrigger类的方法,Aria2HttpClient保持不变*
 
+* 回调直接接受dict参数 
+* Aria2WebsocketTrigger的相应方法获得了返回值
+* id现在需要传入一个可以调用的id工厂函数作为uuid使用,否则将使用默认的uuid生成器
+```
+@trigger.onDownloadStart
+async def callback1(trigger, data):
+    print("第一个回调{0}".format(data))
+
+@trigger.onDownloadStart
+@run_sync
+def callback2(trigger, data):
+    print("第二个回调{0}".format(data))
+```
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)

@@ -41,6 +41,7 @@ def main():
         install_requires=["aiohttp", "aiofiles"],
         license='GPLv3',
         classifiers=[
+            "Development Status :: 3 - Alpha",
             "Framework :: AsyncIO",
             "Operating System :: OS Independent",
             "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

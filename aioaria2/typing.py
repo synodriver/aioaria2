@@ -2,8 +2,8 @@
 """
 支持类型注释
 """
-import asyncio
 from typing import (Callable,
+                    Dict,
                     Coroutine,
                     Any,
                     TypeVar,
@@ -14,7 +14,7 @@ Aria2WebsocketTrigger = TypeVar("Aria2WebsocketTrigger", bound="Aria2WebsocketTr
 if TYPE_CHECKING:
     from aioaria2 import Aria2WebsocketTrigger
 
-CallBack = Callable[[Aria2WebsocketTrigger, asyncio.Task], Coroutine[Any, Any, Any]]
+CallBack = Callable[[Aria2WebsocketTrigger, Dict[str, Any]], Coroutine[Any, Any, Any]]
 """
 Websocket事件的回调函数
 """

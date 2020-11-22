@@ -757,7 +757,6 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         super().__init__(url, identity, mode, token, queue)
         self.kw = kw
         self.functions: DefaultDict[str, List[CallBack]] = defaultdict(list)  # 存放各个notice的回调
-        self._closed = False
 
     @classmethod
     async def new(cls,
@@ -797,31 +796,38 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         except Exception as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
 
+    @property
+    def closed(self):
+        return self.client_session.closed
+
     async def close(self):
-        self._closed = True
         await super().close()
         await self._client_session.close()
 
     async def listen(self) -> None:
         """
         轮询返回数据
-        :return:
         """
-        # TODO 添加异步回调 Done
-        while not self._closed:
-            task = asyncio.create_task(self.client_session.receive_json())
-            # task.add_done_callback(self.event)
-            task = add_async_callback(task, self.handle_event)
-            await task
+        # TODO 接受函数与处理事件的分开,处理事件的可能很耗时因此阻塞loop
+        try:
+            while not self.closed:
+                try:
+                    data = await self.client_session.receive_json()
+                except TypeError:  # aria2抽了
+                    continue
+                if not data or not isinstance(data, dict):
+                    continue
+                asyncio.create_task(self.handle_event(data))
+        finally:
+            await self.close()
 
-    async def handle_event(self, future: asyncio.Task) -> None:
+    async def handle_event(self, data: dict) -> None:
         """
         基础回调函数 当websocket服务器向客户端发送数据时候 此方法会自动调用
         :param future: receive_json包装对象。 显然，与http不同，你得自己过滤result字段
         :return:
         """
         # 1.2.3更新:回调只能是异步函数了,同一种可以注册多个方法,同步的需要用run_sync包装
-        data = future.result()
         if "result" in data:
             # 等效于post数据的结果
             ResultStore.add_result(data)
@@ -830,8 +836,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         if "method" in data:
             # 来自aria2的notice信息
             method = data["method"]
-            if method in self.functions:
-                await asyncio.gather(*map(lambda x: x(self, future), self.functions[method]))
+            if method in self.functions:  # TODO 有鬼
+                await asyncio.gather(*map(lambda x: x(self, data), self.functions[method]))
 
     def register(self, func: CallBack, type_: str) -> None:
         """
