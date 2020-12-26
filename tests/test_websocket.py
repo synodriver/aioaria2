@@ -7,12 +7,11 @@ from pprint import pprint
 HOST = 'http://aria.blackjoe.art:2082/jsonrpc'
 
 
-async def callback(trigger, future):
-    print("下载开始{0}".format(future.result()))
+async def callback(trigger, data):
+    print("下载开始{0}".format(data))
 
 
-async def callback2(trigger: aioaria2.Aria2WebsocketTrigger, future):
-    data = future.result()
+async def callback2(trigger: aioaria2.Aria2WebsocketTrigger, data):
     print("下载完成{0}".format(data))
 
 
@@ -25,9 +24,8 @@ async def callback3(trigger: aioaria2.Aria2WebsocketTrigger, future):
     trigger.identity = "id"
 
 
-async def onresult(trigger, future):
+async def onresult(trigger, data):
     print("结果")
-    data = future.result()
     if data['id'] == "getFiles":
         # 如同http一样的返回     getFiles调用
         url = data["result"][0]["uris"][0]["uri"]
@@ -48,17 +46,12 @@ async def get_client():
 
 
 async def get_trigger():
-    async with await aioaria2.Aria2WebsocketTrigger.new(HOST, token="a489451594cda0792df1") as client:
+    client = await aioaria2.Aria2WebsocketTrigger.new(HOST, token="a489451594cda0792df1")
     # client=aioaria2.Aria2WebsocketTrigger("id", HOST,token="adman",)
-        pprint(await client.getVersion())
-        pprint(await client.addUri(["https://www.google.com"]))
-        client.onDownloadStart(callback)
-        client.onDownloadStart(callback2)
-        client.onDownloadComplete(callback2)
-        client.onDownloadError(callback3)
-        start = time.time()
-        await asyncio.sleep(100)
-        pass
+
+    client.onDownloadStart(callback)
+    client.onDownloadComplete(callback2)
+    await client.addUri(["https://www.baidu.com"])
 
 
 def main():
@@ -66,9 +59,15 @@ def main():
     # loop.call_soon_threadsafe()
     # asyncio.run_coroutine_threadsafe()
     # tasks = [loop.create_task(get_trigger()),loop.create_task(get_client())]  # , loop.create_task(get_client())]
-    tasks = [loop.create_task(get_trigger())]
+    tasks = [loop.create_task(get_trigger()), asyncio.sleep(100)]
     loop.run_until_complete(asyncio.wait(tasks))
 
 
 if __name__ == "__main__":
-    asyncio.run(get_client())
+    loop = asyncio.get_event_loop()
+    loop.create_task(get_trigger())
+    try:
+        loop.run_forever()
+    finally:
+        loop.close()
+    # main()

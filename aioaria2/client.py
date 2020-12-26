@@ -16,7 +16,6 @@ from aioaria2.exceptions import Aria2rpcException
 from aioaria2.utils import (add_options_and_position,
                             b64encode_file,
                             get_status,
-                            add_async_callback,
                             ResultStore)
 from aioaria2.typing import CallBack, IdFactory
 
@@ -824,7 +823,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
     async def handle_event(self, data: dict) -> None:
         """
         基础回调函数 当websocket服务器向客户端发送数据时候 此方法会自动调用
-        :param future: receive_json包装对象。 显然，与http不同，你得自己过滤result字段
+        :param data: receive_json包装对象。 显然，与http不同，你得自己过滤result字段
         :return:
         """
         # 1.2.3更新:回调只能是异步函数了,同一种可以注册多个方法,同步的需要用run_sync包装

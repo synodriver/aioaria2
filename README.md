@@ -1,8 +1,14 @@
-提供aria2异步客户端的包
-===
+# aioaria2
 
-# 本模块提供与aria2异步通信的客户端与管理aria2进程的服务端
-### [pypi地址](https://pypi.org/project/aioaria2/)
+提供aria2异步客户端通信
+
+[![pypi](https://img.shields.io/pypi/v/aioaria2.svg)](https://pypi.org/project/aioaria2/) 
+![python](https://img.shields.io/pypi/pyversions/aioaria2)
+![implementation](https://img.shields.io/pypi/implementation/aioaria2)
+![wheel](https://img.shields.io/pypi/wheel/aioaria2)
+![license](https://img.shields.io/github/license/synodriver/aioaria2.svg)
+
+## 本模块提供与aria2异步通信的客户端与管理aria2进程的服务端
 ## 使用方法：
 ### 示例如下
 ```python
@@ -48,11 +54,12 @@ asyncio.run(main())
 - [x] 单元测试
 
 
-[jsonrpc](https://xyne.archlinux.ca/projects/python3-aria2jsonrpc)
-        本模块在其之上构建，提供了异步支持，以级websocket支持
+本模块在[aria2jsonrpc](https://xyne.archlinux.ca/projects/python3-aria2jsonrpc)
+之上构建，提供了异步支持，以级websocket支持
 
 ### windows用户应该加上以下设置     
 ```
+# 为了启动异步子进程管理
 asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 asyncio.set_event_loop(asyncio.ProactorEventLoop())
 ```
@@ -90,12 +97,12 @@ def callback2(trigger, future):
 * id现在需要传入一个可以调用的id工厂函数作为uuid使用,否则将使用默认的uuid生成器
 ```
 @trigger.onDownloadStart
-async def callback1(trigger, data):
+async def callback1(trigger, data:dict):
     print("第一个回调{0}".format(data))
 
 @trigger.onDownloadStart
 @run_sync
-def callback2(trigger, data):
+def callback2(trigger, data:dict):
     print("第二个回调{0}".format(data))
 ```
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)
