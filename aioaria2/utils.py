@@ -64,7 +64,7 @@ class ResultStore:
         if cls._futures.get(identity):  # 已经存在这个id的future了 不用创建了
             future = cls._futures[identity]
         else:
-            future = asyncio.get_event_loop().create_future()  # TODO 那边send之后需要立即fetch不然没有future对象 改一改
+            future = asyncio.get_event_loop().create_future()  # todo 可能会导致Future泄漏吗?
             cls._futures[identity] = future
         try:
             return await asyncio.wait_for(future, timeout)

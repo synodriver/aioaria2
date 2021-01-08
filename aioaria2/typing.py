@@ -20,7 +20,7 @@ Websocket事件的回调函数
 """
 IdFactory = Callable[[], int]
 """
-产生随机id的工厂函数
+产生随机id的工厂函数 如果一定要参数可以用functools.partial
 """
 
 # TODO 完成typing

@@ -7,7 +7,7 @@
 import asyncio
 from collections import defaultdict
 from inspect import stack
-from typing import Dict, Any, List, Union, Callable, DefaultDict
+from typing import Dict, Any, List, Union, DefaultDict
 import warnings
 
 import aiohttp
@@ -796,10 +796,10 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self.client_session.closed
 
-    async def close(self):
+    async def close(self) -> None:
         await super().close()
         await self._client_session.close()
 
@@ -823,11 +823,11 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
     async def handle_event(self, data: dict) -> None:
         """
         基础回调函数 当websocket服务器向客户端发送数据时候 此方法会自动调用
-        :param data: receive_json包装对象。 显然，与http不同，你得自己过滤result字段
+        :param data: receive_json包装对象 显然,与http不同,你得自己过滤出result字段,因为这个是完整的jsonrpc响应
         :return:
         """
         # 1.2.3更新:回调只能是异步函数了,同一种可以注册多个方法,同步的需要用run_sync包装
-        if "result" in data:
+        if "result" in data or "error" in data:
             # 等效于post数据的结果
             ResultStore.add_result(data)
             # if "result" in self.functions:

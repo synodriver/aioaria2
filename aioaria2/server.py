@@ -12,6 +12,7 @@ import threading
 
 ENCODING = "gbk"
 
+
 # --------------------------#
 #
 # cache: Dict[str, object] = {}
@@ -65,33 +66,37 @@ class Aria2Server(metaclass=SingletonType):
         self.process = None
         self._is_running = False
 
-    def start(self):
+    def start(self) -> None:
         self.process = subprocess.Popen(self.cmd)
         self._is_running = True
 
-    def wait(self):
+    def wait(self) -> int:
         """
         等待进程结束
-        :return:
+        :return: ret code
         """
         code = self.process.wait()
         self._is_running = False
         return code
 
-    def terminate(self):
+    def terminate(self) -> int:
+        """
+        结束进程
+        :return: ret code
+        """
         self.process.terminate()
         return self.wait()
 
-    def kill(self):
+    def kill(self) -> int:
         self.process.kill()
         return self.wait()
 
     @property
-    def pid(self):
+    def pid(self) -> int:
         return self.process.pid
 
     @property
-    def returncode(self):
+    def returncode(self) -> int:
         return self.process.returncode
 
     def __enter__(self):
@@ -112,21 +117,21 @@ class AsyncAria2Server(Aria2Server):
     def __init__(self, *args: str, daemon=False):
         super().__init__(*args, daemon=daemon)
 
-    async def start(self):
+    async def start(self) -> None:
         program, *args = self.cmd
         self.process = await asyncio.create_subprocess_exec(program, *args)
         self._is_running = True
 
-    async def wait(self):
+    async def wait(self) -> int:
         code = await self.process.wait()
         self._is_running = False
         return code
 
-    async def terminate(self):
+    async def terminate(self) -> int:
         self.process.terminate()
         return await self.wait()
 
-    async def kill(self):
+    async def kill(self) -> int:
         self.process.kill()
         return await self.wait()
 
