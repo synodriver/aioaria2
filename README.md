@@ -16,7 +16,7 @@ import aioaria2
 import asyncio
 from pprint import pprint
 async def main():
-    async with aioaria2.Aria2HttpClient("id", "http://192.168.0.107:6800/jsonrpc", "normal",
+    async with aioaria2.Aria2HttpClient("http://192.168.0.107:6800/jsonrpc", mode="normal",
                                         token="admin") as client:
         pprint(await client.getVersion())
 asyncio.run(main())
@@ -39,7 +39,7 @@ asyncio.run(main())
 import aioaria2
 import asyncio
 async def main():
-    server = aioaria2.AsyncAria2Server(r"128aria2c.exe",
+    server = aioaria2.AsyncAria2Server(r"aria2c.exe",
                                        r"--conf-path=aria2.conf", "--rpc-secret=admin", daemon=True)
     await server.start()
     await server.wait()
