@@ -4,7 +4,7 @@
 """
 from typing import (Callable,
                     Dict,
-                    Coroutine,
+                    Awaitable,
                     Any,
                     TypeVar,
                     TYPE_CHECKING)
@@ -14,7 +14,7 @@ Aria2WebsocketTrigger = TypeVar("Aria2WebsocketTrigger", bound="Aria2WebsocketTr
 if TYPE_CHECKING:
     from aioaria2 import Aria2WebsocketTrigger
 
-CallBack = Callable[[Aria2WebsocketTrigger, Dict[str, Any]], Coroutine[Any, Any, Any]]
+CallBack = Callable[[Aria2WebsocketTrigger, Dict[str, Any]], Awaitable[Any]]
 """
 Websocket事件的回调函数
 """
