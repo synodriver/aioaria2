@@ -14,7 +14,7 @@ def get_version() -> str:
 
 
 def get_dis():
-    with open("README.md", "r", encoding="utf-8") as f:
+    with open("README.markdown", "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -38,7 +38,7 @@ def main():
         author_email="diguohuangjiajinweijun@gmail.com",
         maintainer="v-vinson",
         python_requires=">=3.6",
-        install_requires=["aiohttp", "aiofiles"],
+        install_requires=["aiohttp", "aiofiles", "typing-extensions"],
         license='GPLv3',
         classifiers=[
             "Development Status :: 3 - Alpha",
@@ -48,6 +48,7 @@ def main():
             "Programming Language :: Python",
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: Implementation :: CPython"
         ],
         include_package_data=True

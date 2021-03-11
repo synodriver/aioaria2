@@ -3,6 +3,8 @@ import asyncio
 from pprint import pprint
 import aioaria2
 
+import ujson
+
 
 class TestHTTP(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
@@ -30,7 +32,9 @@ class TestWebsocket(unittest.IsolatedAsyncioTestCase):
         # self.client = aioaria2.Aria2HttpClient("test", "http://aria.blackjoe.art:2082/jsonrpc",
         #                                        token="a489451594cda0792df1")
         self.trigger = await aioaria2.Aria2WebsocketTrigger.new("http://aria.blackjoe.art:2082/jsonrpc",
-                                                                token="a489451594cda0792df1")
+                                                                token="a489451594cda0792df1",
+                                                                loads=ujson.loads,
+                                                                dumps=ujson.dumps)
 
         # asyncio.get_running_loop().create_task(self.trigger.listen())
         @self.trigger.onDownloadStart

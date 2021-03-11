@@ -4,6 +4,8 @@ import asyncio
 import time
 from pprint import pprint
 
+import ujson
+
 HOST = 'http://aria.blackjoe.art:2082/jsonrpc'
 
 
@@ -38,7 +40,7 @@ async def onresult(trigger, data):
 
 async def get_client():
     async with aioaria2.Aria2HttpClient(HOST,
-                                        token="a489451594cda0792df1") as client:
+                                        token="a489451594cda0792df1", loads=ujson.loads, dumps=ujson.dumps) as client:
         # pprint(await client.addUri(["http://odrive.aptx.xin/%E5%8A%A8%E7%94%BB/2004/200445.zip"]))
         pprint(await client.getVersion())
 
