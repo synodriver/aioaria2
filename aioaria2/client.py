@@ -15,6 +15,8 @@ from typing_extensions import Literal
 
 from aioaria2.exceptions import Aria2rpcException
 from aioaria2.utils import (add_options_and_position,
+                            DEFAULT_JSON_DECODER,
+                            DEFAULT_JSON_ENCODER,
                             b64encode_file,
                             get_status,
                             ResultStore)
@@ -708,16 +710,20 @@ class Aria2HttpClient(_Aria2BaseClient):
         :param queue: 请求队列
         :param client_session: aiohttp的session
         :param kw: aiohttp.session.post的相关参数
+            new in v1.3.1 loads: DEFAULT_JSON_DECODER   json.loads
+            dumps json.dumps
         """
         super().__init__(url, identity, mode, token, queue)
-        self.client_session = client_session or aiohttp.ClientSession()  # aiohttp的会话
         self.kw = kw
+        self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
+        self.dumps = self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
+        self.client_session = client_session or aiohttp.ClientSession(json_serialize=self.dumps)  # aiohttp的会话
 
     async def send_request(self, req_obj: Dict[str, Any]) -> Awaitable[Union[Dict[str, Any], Any]]:
         try:
             async with self.client_session.post(self.url, json=req_obj, **self.kw) as response:
                 try:
-                    data = await response.json()
+                    data = await response.json(loads=self.loads)
                     return data["result"]
                 # 没有result就是异常
                 except KeyError:
@@ -750,12 +756,16 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             :param token: rpc服务器密码 (用 `--rpc-secret`设置)
             :param queue: 请求队列
             :param kw: ws_connect()的相关参数
+                new in v1.3.1 loads: DEFAULT_JSON_DECODER   json.loads
+                dumps json.dumps
         """
         if (stack()[1].function) not in ("new", "eval_in_context"):
             warnings.warn(
                 "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + "." + "new"))
         super().__init__(url, identity, mode, token, queue)
         self.kw = kw
+        self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
+        self.dumps = self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
         self.functions: DefaultDict[str, List[CallBack]] = defaultdict(list)  # 存放各个notice的回调
 
     @classmethod
@@ -777,7 +787,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return: 真正的实例
         """
         self = cls(url, identity, mode, token, queue, **kw)
-        self._client_session = aiohttp.ClientSession()
+        self._client_session = aiohttp.ClientSession(json_serialize=self.dumps)
         self.client_session: aiohttp.ClientWebSocketResponse = await self._client_session.ws_connect(self.url,
                                                                                                      **self.kw)
         asyncio.create_task(self.listen())
@@ -785,14 +795,11 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
 
     async def send_request(self, req_obj: Dict[str, Any]) -> Awaitable[Union[Dict[str, Any], Any]]:
         try:
-            await self.client_session.send_json(req_obj)
+            await self.client_session.send_json(req_obj, dumps=self.dumps)
             data = await ResultStore.fetch(req_obj["id"], self.kw.get("timeout", None) or 10.0)
             return data["result"]
-            # TODO: 改写为随机id工厂 id参数就是个工厂函数 if没有就按照ResultStore里面的来吧
         except KeyError:  # 'error':xxx
             raise Aria2rpcException('unexpected result: {}'.format(data))
-        except Aria2rpcException:
-            raise
         except Exception as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
 
@@ -812,7 +819,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         try:
             while not self.closed:
                 try:
-                    data = await self.client_session.receive_json()
+                    data = await self.client_session.receive_json(loads=self.loads)
                 except TypeError:  # aria2抽了
                     continue
                 if not data or not isinstance(data, dict):
@@ -914,7 +921,3 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
-
-
-if __name__ == "__main__":
-    pass

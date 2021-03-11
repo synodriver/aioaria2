@@ -3,6 +3,7 @@
 本模块存放工具函数
 """
 import sys
+import json
 import base64
 import asyncio
 from functools import wraps, partial
@@ -13,6 +14,8 @@ import aiofiles
 from aioaria2.exceptions import Aria2rpcException
 
 JSON_ENCODING = "utf-8"
+DEFAULT_JSON_DECODER = json.loads
+DEFAULT_JSON_ENCODER = json.dumps
 
 
 def __init__():

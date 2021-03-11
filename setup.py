@@ -14,7 +14,7 @@ def get_version() -> str:
 
 
 def get_dis():
-    with open("README.md", "r", encoding="utf-8") as f:
+    with open("README.markdown", "r", encoding="utf-8") as f:
         return f.read()
 
 
