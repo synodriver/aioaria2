@@ -52,7 +52,8 @@ class _Aria2BaseClient:
         self.mode = mode
         self.token = token
 
-    async def jsonrpc(self, method: str, params: List[Any] = None, prefix: str = 'aria2.') -> Awaitable[Dict[str, Any]]:
+    async def jsonrpc(self, method: str, params: List[Any] = None, prefix: str = 'aria2.') -> Awaitable[
+        Union[Dict[str, Any]], None]:
         """
         组装json数据
         :param method: 请求方法
@@ -94,14 +95,15 @@ class _Aria2BaseClient:
         # req_obj = self.queue
         # self.queue = []
         # return await self.send_request(req_obj)
-        results = []
+        req_objs = []
         while not self.queue.empty():
-            req_obj = await self.queue.get()
-            results.append(await self.send_request(req_obj))
+            req_objs.append(await self.queue.get())
+
+        results = await asyncio.gather(*map(self.send_request, req_objs))
         return results
 
-    async def addUri(self, uris: List[str], options: Dict[str, Any] = None, position: int = None) -> Awaitable[Union[
-        Dict[str, str], Any]]:
+    async def addUri(self, uris: List[str], options: Dict[str, Any] = None, position: int = None) -> Awaitable[
+        Union[str, Dict[str, str], None]]:
         """
         添加新的任务到下载队列
         :param uris: 要添加的链接 务必是list HTTP/FTP/SFTP/BitTorrent URIs (strings)
