@@ -7,7 +7,7 @@ import json
 import base64
 import asyncio
 from functools import wraps, partial
-from typing import Callable, Any, Awaitable, Dict
+from typing import Optional, Any, Awaitable, Dict, Generator, Callable
 
 import aiofiles
 
@@ -57,7 +57,7 @@ class ResultStore:
                 future.set_result(result)
 
     @classmethod
-    async def fetch(cls, identity: int, timeout: float = None) -> Dict[str, Any]:
+    async def fetch(cls, identity: int, timeout: Optional[float] = None) -> Dict[str, Any]:
         """
         返回暂存在本类中的结果
         :param identity: jsonrpc返回的id
@@ -94,14 +94,14 @@ def run_sync(func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
     return _wrapper
 
 
-async def add_async_callback(task: asyncio.Task, callback):
+async def add_async_callback(task: asyncio.Task, callback) -> asyncio.Task:
     assert asyncio.iscoroutinefunction(callback), "callback must be a coroutinefunction"
     result = await task
     await callback(task)
     return result
 
 
-def add_options_and_position(params, options=None, position=None):
+def add_options_and_position(params: list, options=None, position=None) -> list:
     """
     Convenience method for adding options and position to parameters.
     """
@@ -118,7 +118,7 @@ def add_options_and_position(params, options=None, position=None):
     return params
 
 
-async def b64encode_file(path):
+async def b64encode_file(path: str) -> str:
     """
     读取文件，转换b64编码
     """
@@ -126,7 +126,7 @@ async def b64encode_file(path):
         return str(base64.b64encode(await handle.read()), JSON_ENCODING)
 
 
-def get_status(response):
+def get_status(response: Dict) -> Any:
     """
     Process a status response.
     """
@@ -139,7 +139,7 @@ def get_status(response):
         return 'error'
 
 
-def read_configfile(path: str, prefix: str = "--"):
+def read_configfile(path: str, prefix: str = "--") -> Generator[str, None, None]:
     """
     从配置文件中读取可用配置
     :param path: aria2配置文件路径
