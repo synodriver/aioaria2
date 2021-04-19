@@ -1,6 +1,7 @@
 /dist/
 /build/
 /.idea/
+/.mypy_cache/
 *.pyd
 *.pyc
 *.pyo

@@ -63,7 +63,7 @@ class Aria2Server(metaclass=SingletonType):
             self.cmd = []
         if daemon:
             self.cmd.append('--stop-with-process={:d}'.format(os.getpid()))
-        self.process = None
+        self.process: subprocess.Popen = None  # type: ignore
         self._is_running = False
 
     def start(self) -> None:
@@ -99,11 +99,11 @@ class Aria2Server(metaclass=SingletonType):
     def returncode(self) -> int:
         return self.process.returncode
 
-    def __enter__(self):
+    def __enter__(self) -> "Aria2Server":
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._is_running:
             self.terminate()
 
@@ -117,29 +117,29 @@ class AsyncAria2Server(Aria2Server):
     def __init__(self, *args: str, daemon=False):
         super().__init__(*args, daemon=daemon)
 
-    async def start(self) -> None:
+    async def start(self) -> None:  # type: ignore
         program, *args = self.cmd
-        self.process = await asyncio.create_subprocess_exec(program, *args)
+        self.process = await asyncio.create_subprocess_exec(program, *args)  # type: ignore
         self._is_running = True
 
-    async def wait(self) -> int:
-        code = await self.process.wait()
+    async def wait(self) -> int:  # type: ignore
+        code = await self.process.wait()  # type: ignore
         self._is_running = False
         return code
 
-    async def terminate(self) -> int:
+    async def terminate(self) -> int:  # type: ignore
         self.process.terminate()
         return await self.wait()
 
-    async def kill(self) -> int:
+    async def kill(self) -> int:  # type: ignore
         self.process.kill()
         return await self.wait()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "AsyncAria2Server":
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._is_running:
             await self.terminate()
 

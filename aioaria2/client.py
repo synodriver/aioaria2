@@ -7,7 +7,7 @@
 import asyncio
 from collections import defaultdict
 from inspect import stack
-from typing import Dict, Any, List, Union, Iterable, DefaultDict, Awaitable, AsyncGenerator
+from typing import Any, Optional, Union, List, Iterable, Dict, DefaultDict, AsyncGenerator
 import warnings
 
 import aiohttp
@@ -30,7 +30,7 @@ class _Aria2BaseClient:
 
     def __init__(self,
                  url: str,
-                 identity: IdFactory = None,
+                 identity: Optional[IdFactory] = None,
                  mode: str = 'normal',
                  token: str = None,
                  queue: asyncio.Queue = None):
@@ -44,7 +44,7 @@ class _Aria2BaseClient:
             :param token: rpc服务器密码 (用 `--rpc-secret`设置)
         """
         if queue is None:
-            self.queue = asyncio.Queue()
+            self.queue: asyncio.Queue = asyncio.Queue()
         else:
             self.queue = queue
         self.identity = identity or ResultStore.get_id
@@ -52,7 +52,8 @@ class _Aria2BaseClient:
         self.mode = mode
         self.token = token
 
-    async def jsonrpc(self, method: str, params: List[Any] = None, prefix: str = 'aria2.') -> Awaitable[Dict[str, Any]]:
+    async def jsonrpc(self, method: str, params: Optional[List[Any]] = None, prefix: str = 'aria2.') -> Union[
+        Dict[str, Any], List[Any], str, None]:
         """
         组装json数据
         :param method: 请求方法
@@ -87,21 +88,24 @@ class _Aria2BaseClient:
             return req_obj
         return await self.send_request(req_obj)
 
-    async def process_queue(self) -> Awaitable[List]:
+    async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
+        raise NotImplementedError
+
+    async def process_queue(self) -> List:
         """
         处理队列请求
         """
         # req_obj = self.queue
         # self.queue = []
         # return await self.send_request(req_obj)
-        results = []
+        req_objs = []
         while not self.queue.empty():
-            req_obj = await self.queue.get()
-            results.append(await self.send_request(req_obj))
+            req_objs.append(await self.queue.get())
+
+        results = await asyncio.gather(*map(self.send_request, req_objs))
         return results
 
-    async def addUri(self, uris: List[str], options: Dict[str, Any] = None, position: int = None) -> Awaitable[Union[
-        Dict[str, str], Any]]:
+    async def addUri(self, uris: List[str], options: Dict[str, Any] = None, position: int = None) -> str:
         """
         添加新的任务到下载队列
         :param uris: 要添加的链接 务必是list HTTP/FTP/SFTP/BitTorrent URIs (strings)
@@ -112,10 +116,10 @@ class _Aria2BaseClient:
         """
         params = [uris]
         params = add_options_and_position(params, options, position)
-        return await self.jsonrpc('addUri', params)
+        return await self.jsonrpc('addUri', params)  # type: ignore
 
-    async def addTorrent(self, torrent: bytes, uris: List[str] = None, options: Dict[str, Any] = None,
-                         position: int = None) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def addTorrent(self, torrent: str, uris: List[str] = None, options: Dict[str, Any] = None,
+                         position: int = None) -> Union[Dict[str, Any], Any]:
         """
         下载种子
         :param torrent: base64编码的种子文件 base64.b64encode(open("xxx.torrent","rb").read())
@@ -128,12 +132,12 @@ class _Aria2BaseClient:
         """
         params = [torrent]
         if uris:
-            params.append(uris)
+            params.append(uris)  # type: ignore
         params = add_options_and_position(params, options, position)
         return await self.jsonrpc('addTorrent', params)
 
-    async def addMetalink(self, metalink: List, options: Dict[str, Any] = None, position: int = None) -> Awaitable[
-        Union[Dict[str, Any], Any]]:
+    async def addMetalink(self, metalink: List, options: Dict[str, Any] = None, position: int = None) -> Union[
+        Dict[str, Any], Any]:
         """
         此方法通过上载一个来添加一个Metalink下载 metalink是一个用base64编码的字符串，其中包含“.metalink”文件。
         :param metalink: base64编码的字符串 base64.b64encode(open('file.meta4',"rb").read())
@@ -146,7 +150,7 @@ class _Aria2BaseClient:
         params = add_options_and_position(params, options, position)
         return await self.jsonrpc('addTorrent', params)
 
-    async def remove(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def remove(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         正在下载的停止下载 停止的删除状态
         :param gid: GID(或GID)是管理每个下载的密钥。每个下载将被分配一个唯一的GID。GID在aria2中存储为64位二进制值。
@@ -156,7 +160,7 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('remove', params)
 
-    async def forceRemove(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def forceRemove(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         此方法删除由gid表示的下载。这个方法的行为就像aria2.remove(),但是会立即生效，而不执行任何需要时间的操作，
         例如联系BitTorrent跟踪器先取消下载。
@@ -166,7 +170,7 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('forceRemove', params)
 
-    async def pause(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def pause(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         此方法暂停由gid(字符串)表示的下载。暂停下载的状态变为暂停。如果下载是活动的，下载将放在等待队列的前面。
         当状态暂停时，下载不会启动。要将状态更改为等待，请使用aria2.unpause()方法
@@ -176,14 +180,14 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('pause', params)
 
-    async def pauseAll(self) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def pauseAll(self) -> Union[Dict[str, Any], Any]:
         """
         这个方法相当于为每个活动/等待的下载调用aria2.pause()。这个方法返回OK。
         :return:包含结果的json
         """
         return await self.jsonrpc('pauseAll')
 
-    async def forcePause(self, gid) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def forcePause(self, gid) -> Union[Dict[str, Any], Any]:
         """
         此方法暂停由gid表示的下载。这个方法的行为就像aria2.pause()，只是这个方法暂停下载，不执行任何需要时间的操作，
         比如联系BitTorrent tracker先取消下载。
@@ -193,14 +197,14 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('forcePause', params)
 
-    async def forcePauseAll(self) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def forcePauseAll(self) -> Union[Dict[str, Any], Any]:
         """
         这个方法相当于对每个活动/等待的下载调用aria2.forcePause()。这个方法返回OK
         :return:包含结果的json
         """
         return await self.jsonrpc('forcePauseAll')
 
-    async def unpause(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def unpause(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         此方法将由gid (string)表示的下载状态从暂停更改为等待，从而使下载符合重新启动的条件。此方法返回未暂停下载的GID。
         :param gid:GID(或GID)是管理每个下载的密钥。每个下载将被分配一个唯一的GID。GID在aria2中存储为64位二进制值。
@@ -209,14 +213,14 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('unpause', params)
 
-    async def unpauseAll(self) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def unpauseAll(self) -> Union[Dict[str, Any], Any]:
         """
         这个方法相当于对每个暂停的下载调用aria2.unpause()。这个方法返回OK
         :return:包含结果的json
         """
         return await self.jsonrpc('unpauseAll')
 
-    async def tellStatus(self, gid: str, keys: List[str] = None) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def tellStatus(self, gid: str, keys: List[str] = None) -> Union[Dict[str, Any], Any]:
         """
         此方法返回由gid(字符串)表示的下载进度
         :param gid: GID(或GID)是管理每个下载的密钥。每个下载将被分配一个唯一的GID。GID在aria2中存储为64位二进制值。
@@ -284,10 +288,10 @@ class _Aria2BaseClient:
         """
         params = [gid]
         if keys:
-            params.append(keys)
+            params.append(keys)  # type: ignore
         return await self.jsonrpc('tellStatus', params)
 
-    async def getUris(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def getUris(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         此方法返回由gid(字符串)表示的下载中使用的uri。响应是一个json，它包含以下键。值是字符串
         :param gid: GID(或GID)是管理每个下载的密钥。每个下载将被分配一个唯一的GID。GID在aria2中存储为64位二进制值。
@@ -298,7 +302,7 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('getUris', params)
 
-    async def getFiles(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def getFiles(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         返回下载文件列表
         :param gid: GID(或GID)是管理每个下载的密钥。每个下载将被分配一个唯一的GID。GID在aria2中存储为64位二进制值。
@@ -318,7 +322,7 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('getFiles', params)
 
-    async def getPeers(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def getPeers(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         返回下载对象，仅适用于bt
         :param gid: GID(或GID)是管理每个下载的密钥。每个下载将被分配一个唯一的GID。GID在aria2中存储为64位二进制值。
@@ -345,7 +349,7 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('getPeers', params)
 
-    async def getServers(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def getServers(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         此方法返回当前连接的HTTP(S)/FTP/SFTP服务器的下载，用gid(字符串)表示。响应是一个结构数组，包含以下key。值是字符串。
         :param gid:GID(或GID)是管理每个下载的密钥。每个下载将被分配一个唯一的GID。GID在aria2中存储为64位二进制值。
@@ -358,7 +362,7 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('getServers', params)
 
-    async def tellActive(self, keys: List[str] = None) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def tellActive(self, keys: Optional[List[str]] = None) -> Union[Dict[str, Any], Any]:
         """
         此方法返回活动下载列表。响应是一个与aria2.tellStatus()方法返回的结构相同的数组。关于keys参数，请参考aria2.tellStatus()方法。
         :param keys: 如果指定，则返回结果只包含keys数组中的键。如果键keys空或省略，则返回结果包含所有键。
@@ -389,10 +393,10 @@ class _Aria2BaseClient:
         if keys:
             params = [keys]
         else:
-            params = None
+            params = None  # type: ignore
         return await self.jsonrpc('tellActive', params)
 
-    async def tellWaiting(self, offset: int, num: int, keys: List[str] = None) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def tellWaiting(self, offset: int, num: int, keys: List[str] = None) -> Union[Dict[str, Any], Any]:
         """
         此方法返回等待下载的列表，包括暂停的下载。偏移量是一个整数，它指定等待在前面的下载的偏移量。
         num是一个整数，指定最大值。要返回的下载数量。关于keys参数，请参考aria2.tellStatus()方法。
@@ -403,10 +407,10 @@ class _Aria2BaseClient:
         """
         params = [offset, num]
         if keys:
-            params.append(keys)
+            params.append(keys)  # type: ignore
         return await self.jsonrpc('tellWaiting', params)
 
-    async def tellStopped(self, offset: int, num: int, keys: List[str] = None) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def tellStopped(self, offset: int, num: int, keys: List[str] = None) -> Union[Dict[str, Any], Any]:
         """
         此方法返回停止下载的列表 关于keys参数，请参考aria2.tellStatus()方法。
         :param offset: 起始索引
@@ -416,10 +420,10 @@ class _Aria2BaseClient:
         """
         params = [offset, num]
         if keys:
-            params.append(keys)
+            params.append(keys)  # type: ignore
         return await self.jsonrpc('tellStopped', params)
 
-    async def changePosition(self, gid: str, pos: int, how: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def changePosition(self, gid: str, pos: int, how: str) -> Union[Dict[str, Any], Any]:
         """
         此方法更改队列中由gid表示的下载位置。pos是一个整数。how是一个字符串。
         如果how是POS_SET，它将下载移动到相对于队列开头的位置。
@@ -435,7 +439,7 @@ class _Aria2BaseClient:
         return await self.jsonrpc('changePosition', params)
 
     async def changeUri(self, gid: str, fileIndex: int, delUris: List[str], addUris: List[str], position: int = None) -> \
-            Awaitable[Union[Dict[str, Any], Any]]:
+            Union[Dict[str, Any], Any]:
         """
         此方法从delUris中删除uri，并将addUris中的uri附加到以gid表示的下载中。
         delUris和addUris是字符串列表。下载可以包含多个文件，每个文件都附加了uri。
@@ -460,7 +464,7 @@ class _Aria2BaseClient:
             params.append(position)
         return await self.jsonrpc('changePosition', params)
 
-    async def getOption(self, gid: str) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def getOption(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
         此方法返回由gid表示的下载选项。
         注意，此方法不会返回没有默认值,也没有在配置文件或RPC方法的命令行上设置这些的选项
@@ -474,7 +478,7 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('getOption', params)
 
-    async def changeOption(self, gid: str, options: Dict[str, Any]) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def changeOption(self, gid: str, options: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
         """
         此方法动态地更改由gid (string)表示的下载选项。options是一个字典。输入文件小节中列出的选项是可用的，但以下选项除外:
             dry-run
@@ -499,7 +503,7 @@ class _Aria2BaseClient:
         params = [gid, options]
         return await self.jsonrpc('changeOption', params)
 
-    async def getGlobalOption(self) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def getGlobalOption(self) -> Union[Dict[str, Any], Any]:
         """
         此方法返回全局选项。响应是一个结构体。它的键是选项的名称。值是字符串。
         注意，此方法不会返回没有默认值的选项，也不会在配置文件或RPC方法的命令行上设置这些选项。
@@ -508,7 +512,7 @@ class _Aria2BaseClient:
         """
         return await self.jsonrpc('getGlobalOption')
 
-    async def changeGlobalOption(self, options: Dict[str, Any]) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def changeGlobalOption(self, options: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
         """
         此方法动态更改全局选项。options是一个字典。以下是可供选择的方案:
             bt-max-open-files
@@ -530,7 +534,7 @@ class _Aria2BaseClient:
         params = [options]
         return await self.jsonrpc('changeGlobalOption', params)
 
-    async def getGlobalStat(self) -> Awaitable[Dict[str, str]]:
+    async def getGlobalStat(self) -> Dict[str, str]:
         """
         此方法返回全局统计信息，如总下载和上传速度。响应是一个字典，包含以下键。值是字符串
         :return:
@@ -540,63 +544,63 @@ class _Aria2BaseClient:
              'numWaiting': '0',  # 等待下载数
              'uploadSpeed': '0'}
         """
-        return await self.jsonrpc('getGlobalStat')
+        return await self.jsonrpc('getGlobalStat')  # type: ignore
 
-    async def purgeDownloadResult(self) -> Awaitable[str]:
+    async def purgeDownloadResult(self) -> Literal["OK"]:
         """
         此方法将已完成/错误/删除的下载清除到空闲内存。这个方法返回OK。
         :return: "OK"
         """
-        return await self.jsonrpc('purgeDownloadResult')
+        return await self.jsonrpc('purgeDownloadResult')  # type: ignore
 
-    async def removeDownloadResult(self, gid: str) -> Awaitable[str]:
+    async def removeDownloadResult(self, gid: str) -> Literal["OK"]:
         """
         此方法从内存中删除由gid表示的已完成/错误/已删除的下载。此方法返回OK表示成功。
         :param gid: GID(或GID)是管理每个下载的密钥。每个下载将被分配一个唯一的GID。GID在aria2中存储为64位二进制值
         :return: "OK"
         """
         params = [gid]
-        return await self.jsonrpc('removeDownloadResult', params)
+        return await self.jsonrpc('removeDownloadResult', params)  # type: ignore
 
-    async def getVersion(self) -> Awaitable[Dict[str, Any]]:
+    async def getVersion(self) -> Dict[str, str]:
         """
         此方法返回aria2的版本和启用的特性列表
         :return:一个字典，包含以下键
             version: aria2的版本
             enabledFeatures: 启用功能的列表。每个特性都以字符串的形式给出
         """
-        return await self.jsonrpc('getVersion')
+        return await self.jsonrpc('getVersion')  # type: ignore
 
-    async def getSessionInfo(self) -> Awaitable[Dict[str, str]]:
+    async def getSessionInfo(self) -> Dict[str, str]:
         """
         返回会话信息
         :return:字典，包含以下键
             sessionId: 每次调用aria2时生成的会话id
         """
-        return await self.jsonrpc('getSessionInfo')
+        return await self.jsonrpc('getSessionInfo')  # type: ignore
 
-    async def shutdown(self) -> Awaitable[str]:
+    async def shutdown(self) -> Literal["OK"]:
         """
         关闭aria2
         :return: "OK"
         """
-        return await self.jsonrpc('shutdown')
+        return await self.jsonrpc('shutdown')  # type: ignore
 
-    async def forceShutdown(self) -> Awaitable[str]:
+    async def forceShutdown(self) -> Literal["OK"]:
         """
         该方法关闭了aria2()。该方法的行为像aria2.shutdown而没有执行任何需要时间的操作，比如联系BitTorrent跟踪器先注销下载。
         :return:"OK"
         """
-        return await self.jsonrpc('forceShutdown')
+        return await self.jsonrpc('forceShutdown')  # type: ignore
 
-    async def saveSession(self) -> Awaitable[str]:
+    async def saveSession(self) -> Literal["OK"]:
         """
         此方法将当前会话保存到由——save-session选项指定的文件中。
         :return:"OK"
         """
-        return await self.jsonrpc('saveSession')
+        return await self.jsonrpc('saveSession')  # type: ignore
 
-    async def multicall(self, methods: List[Dict[str, Any]]) -> Awaitable[List[Any]]:
+    async def multicall(self, methods: List[Dict[str, Any]]) -> List[Any]:
         """
         此方法将多个方法调用封装在单个请求中
         :param methods: 字典数组。结构包含两个键:methodName和params。methodName是要调用的方法名，params是包含方法调用参数的数组。
@@ -607,27 +611,27 @@ class _Aria2BaseClient:
                                   'params':[base64.b64encode(open('file.torrent').read())]}]
         :return:
         """
-        return await self.jsonrpc('multicall', [methods], prefix='system.')
+        return await self.jsonrpc('multicall', [methods], prefix='system.')  # type: ignore
 
-    async def listMethods(self) -> Awaitable[List[str]]:
+    async def listMethods(self) -> List[str]:
         """
         此方法在字符串数组中返回所有可用的RPC方法。与其他方法不同，此方法不需要秘密令牌。这是安全的，因为这个方法只返回可用的方法名。
         :return:
         """
-        return await self.jsonrpc('listMethods', prefix='system.')
+        return await self.jsonrpc('listMethods', prefix='system.')  # type: ignore
 
-    async def listNotifications(self) -> Awaitable[List[str]]:
+    async def listNotifications(self) -> List[str]:
         """
         此方法以字符串数组的形式返回所有可用的RPC通知。与其他方法不同，此方法不需要秘密令牌。
         这是安全的，因为这个方法只返回可用的通知名称。
         :return:
         """
-        return await self.jsonrpc('listNotifications', prefix='system.')
+        return await self.jsonrpc('listNotifications', prefix='system.')  # type: ignore
 
     # ----------------------以下是进一步抽象的高级方法----------------------------
 
     async def add_torrent(self, path: str, uris: List[str] = None, options: Dict[str, Any] = None,
-                          position: int = None) -> Awaitable[Union[Dict[str, Any], Any]]:
+                          position: int = None) -> Union[Dict[str, Any], Any]:
         """
         直接添加种子路径
         :param path: 文件路径
@@ -639,8 +643,8 @@ class _Aria2BaseClient:
         torrent = await b64encode_file(path)
         return await self.addTorrent(torrent, uris, options, position)
 
-    async def add_metalink(self, path, options: Dict[str, Any] = None, position: int = None) -> Awaitable[
-        Union[Dict[str, Any], Any]]:
+    async def add_metalink(self, path, options: Dict[str, Any] = None, position: int = None) -> Union[
+        Dict[str, Any], Any]:
         """
         直接添加metalink路径
         :param path:  文件路径
@@ -649,9 +653,9 @@ class _Aria2BaseClient:
         :return:
         """
         metalink = await b64encode_file(path)
-        return await self.addMetalink(metalink, options, position)
+        return await self.addMetalink(metalink, options, position)  # type: ignore
 
-    async def get_status(self, gid: str) -> Awaitable[Dict[str, str]]:
+    async def get_status(self, gid: str) -> Dict[str, str]:
         """
         取一个gid的状态
         :param gid:
@@ -661,7 +665,7 @@ class _Aria2BaseClient:
         return get_status(response)
 
     async def get_statuses(self, gids: Iterable) -> AsyncGenerator[
-        Literal["active", "waiting", "paused", "error", "complete", "removed"], None]:
+        Literal["active", "waiting", "paused", "error", "complete", "removed", "error"], None]:
         """
         取得每个gid的状态 是一个异步生成器
         :param gids:
@@ -686,8 +690,8 @@ class _Aria2BaseClient:
             for gid in gids:
                 yield 'error'
 
-    async def close(self) -> Awaitable[None]:
-        await self.client_session.close()
+    async def close(self) -> None:
+        await self.client_session.close()  # type: ignore
 
 
 class Aria2HttpClient(_Aria2BaseClient):
@@ -719,7 +723,7 @@ class Aria2HttpClient(_Aria2BaseClient):
         self.dumps = self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
         self.client_session = client_session or aiohttp.ClientSession(json_serialize=self.dumps)  # aiohttp的会话
 
-    async def send_request(self, req_obj: Dict[str, Any]) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
         try:
             async with self.client_session.post(self.url, json=req_obj, **self.kw) as response:
                 try:
@@ -728,8 +732,8 @@ class Aria2HttpClient(_Aria2BaseClient):
                 # 没有result就是异常
                 except KeyError:
                     raise Aria2rpcException('unexpected result: {}'.format(data))
-        except aiohttp.client_exceptions.ClientConnectionError as err:
-            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
+        except aiohttp.ClientConnectionError as err:
+            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
     async def __aenter__(self):
         return self
@@ -745,6 +749,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
                  mode: str = 'normal',
                  token=None,
                  queue: asyncio.Queue = None,
+                 client_session: aiohttp.ClientSession = None,
                  **kw):
         """
             :param identity: 操作rpc接口的id 工厂函数
@@ -761,11 +766,12 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         """
         if (stack()[1].function) not in ("new", "eval_in_context"):
             warnings.warn(
-                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + "." + "new"))
+                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + ".new"))
         super().__init__(url, identity, mode, token, queue)
         self.kw = kw
         self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
         self.dumps = self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
+        self._client_session = client_session or aiohttp.ClientSession(json_serialize=self.dumps)
         self.functions: DefaultDict[str, List[CallBack]] = defaultdict(list)  # 存放各个notice的回调
 
     @classmethod
@@ -775,7 +781,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
                   mode: str = 'normal',
                   token: str = None,
                   queue: asyncio.Queue = None,
-                  **kw) -> Awaitable["Aria2WebsocketTrigger"]:
+                  client_session: aiohttp.ClientSession = None,
+                  **kw) -> "Aria2WebsocketTrigger":
         """
         真正创建实例
         :param queue: 继承下来的任务队列
@@ -786,14 +793,16 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :param kw: ws_connect()的相关参数
         :return: 真正的实例
         """
-        self = cls(url, identity, mode, token, queue, **kw)
-        self._client_session = aiohttp.ClientSession(json_serialize=self.dumps)
-        self.client_session: aiohttp.ClientWebSocketResponse = await self._client_session.ws_connect(self.url,
-                                                                                                     **self.kw)
-        asyncio.create_task(self.listen())
-        return self
+        try:
+            self = cls(url, identity, mode, token, queue, client_session, **kw)
+            self.client_session = await self._client_session.ws_connect(self.url, **self.kw)
+            asyncio.create_task(self.listen())
+            return self
+        except aiohttp.ClientError as err:
+            await self._client_session.close()
+            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
-    async def send_request(self, req_obj: Dict[str, Any]) -> Awaitable[Union[Dict[str, Any], Any]]:
+    async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
         try:
             await self.client_session.send_json(req_obj, dumps=self.dumps)
             data = await ResultStore.fetch(req_obj["id"], self.kw.get("timeout", None) or 10.0)
@@ -801,17 +810,17 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         except KeyError:  # 'error':xxx
             raise Aria2rpcException('unexpected result: {}'.format(data))
         except Exception as err:
-            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
+            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
     @property
     def closed(self) -> bool:
         return self.client_session.closed
 
-    async def close(self) -> Awaitable[None]:
+    async def close(self) -> None:
         await super().close()
         await self._client_session.close()
 
-    async def listen(self) -> Awaitable[None]:
+    async def listen(self) -> None:
         """
         轮询返回数据
         """
@@ -828,7 +837,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         finally:
             await self.close()
 
-    async def handle_event(self, data: dict) -> Awaitable[None]:
+    async def handle_event(self, data: dict) -> None:
         """
         基础回调函数 当websocket服务器向客户端发送数据时候 此方法会自动调用
         :param data: receive_json包装对象 显然,与http不同,你得自己过滤出result字段,因为这个是完整的jsonrpc响应
@@ -921,3 +930,6 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
+
+
+Aria2WebsocketClient = Aria2WebsocketTrigger
