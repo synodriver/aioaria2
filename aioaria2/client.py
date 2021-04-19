@@ -89,7 +89,7 @@ class _Aria2BaseClient:
         return await self.send_request(req_obj)
 
     async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
-        raise NotImplemented
+        raise NotImplementedError
 
     async def process_queue(self) -> List:
         """
@@ -732,8 +732,8 @@ class Aria2HttpClient(_Aria2BaseClient):
                 # 没有result就是异常
                 except KeyError:
                     raise Aria2rpcException('unexpected result: {}'.format(data))
-        except aiohttp.client_exceptions.ClientConnectionError as err:
-            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
+        except aiohttp.ClientConnectionError as err:
+            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
     async def __aenter__(self):
         return self
@@ -765,7 +765,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         """
         if (stack()[1].function) not in ("new", "eval_in_context"):
             warnings.warn(
-                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + "." + "new"))
+                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + ".new"))
         super().__init__(url, identity, mode, token, queue)
         self.kw = kw
         self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
@@ -790,11 +790,15 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :param kw: ws_connect()的相关参数
         :return: 真正的实例
         """
-        self = cls(url, identity, mode, token, queue, **kw)
-        self._client_session = aiohttp.ClientSession(json_serialize=self.dumps)
-        self.client_session = await self._client_session.ws_connect(self.url, **self.kw)
-        asyncio.create_task(self.listen())
-        return self
+        try:
+            self = cls(url, identity, mode, token, queue, **kw)
+            self._client_session = aiohttp.ClientSession(json_serialize=self.dumps)
+            self.client_session = await self._client_session.ws_connect(self.url, **self.kw)
+            asyncio.create_task(self.listen())
+            return self
+        except aiohttp.ClientError as err:
+            await self._client_session.close()
+            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
     async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
         try:
@@ -804,7 +808,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         except KeyError:  # 'error':xxx
             raise Aria2rpcException('unexpected result: {}'.format(data))
         except Exception as err:
-            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err)))
+            raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
     @property
     def closed(self) -> bool:
@@ -924,3 +928,6 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
+
+
+Aria2WebsocketClient = Aria2WebsocketTrigger
