@@ -4,12 +4,14 @@
 """
 from aioaria2.client import Aria2HttpClient, Aria2WebsocketTrigger, Aria2WebsocketClient
 from aioaria2.server import Aria2Server, AsyncAria2Server
+from aioaria2.exceptions import Aria2rpcException
 from aioaria2.utils import run_sync, add_async_callback
 
-__version__ = "1.3.2"
+__version__ = "1.3.3rc1"
 __author__ = "synodriver"
 __all__ = ["Aria2Server", "AsyncAria2Server",
            "Aria2WebsocketTrigger", "Aria2HttpClient", "Aria2WebsocketClient",
+           "Aria2rpcException",
            "run_sync", "add_async_callback"]
 
 #
