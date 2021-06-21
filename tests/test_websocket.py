@@ -48,12 +48,16 @@ async def get_client():
 
 
 async def get_trigger():
-    client = await aioaria2.Aria2WebsocketTrigger.new(HOST, token="a489451594cda0792df1")
-    # client=aioaria2.Aria2WebsocketTrigger("id", HOST,token="adman",)
-
-    client.onDownloadStart(callback)
-    client.onDownloadComplete(callback2)
-    await client.addUri(["https://www.baidu.com"])
+    try:
+        client = await aioaria2.Aria2WebsocketTrigger.new("https://127.0.0.1:443", token="a489451594cda0792df1")
+        # client=aioaria2.Aria2WebsocketTrigger("id", HOST,token="adman",)
+        client.onDownloadStart(callback)
+        client.onDownloadComplete(callback2)
+        await client.addUri(["https://www.baidu.com"])
+    except aioaria2.Aria2rpcException as e:
+        pass
+        print("can't connect ")
+        pass
 
 
 def main():

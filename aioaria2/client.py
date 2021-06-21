@@ -148,7 +148,7 @@ class _Aria2BaseClient:
         """
         params = [metalink]
         params = add_options_and_position(params, options, position)
-        return await self.jsonrpc('addTorrent', params)
+        return await self.jsonrpc('addMetalink', params)
 
     async def remove(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
@@ -462,7 +462,7 @@ class _Aria2BaseClient:
         params = [gid, fileIndex, delUris, addUris]
         if position:
             params.append(position)
-        return await self.jsonrpc('changePosition', params)
+        return await self.jsonrpc('changeUri', params)
 
     async def getOption(self, gid: str) -> Union[Dict[str, Any], Any]:
         """
