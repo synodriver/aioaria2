@@ -478,7 +478,7 @@ class _Aria2BaseClient:
         params = [gid]
         return await self.jsonrpc('getOption', params)
 
-    async def changeOption(self, gid: str, options: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
+    async def changeOption(self, gid: str, options: Dict[str, Any]) -> Literal["OK"]:
         """
         此方法动态地更改由gid (string)表示的下载选项。options是一个字典。输入文件小节中列出的选项是可用的，但以下选项除外:
             dry-run
