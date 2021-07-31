@@ -7,7 +7,7 @@
 import asyncio
 from collections import defaultdict
 from inspect import stack
-from typing import Any, Optional, Union, List, Iterable, Dict, DefaultDict, AsyncGenerator
+from typing import Any, Optional, Union, List, Tuple, Iterable, Dict, DefaultDict, AsyncGenerator
 import warnings
 
 import aiohttp
@@ -31,7 +31,7 @@ class _Aria2BaseClient:
     def __init__(self,
                  url: str,
                  identity: Optional[IdFactory] = None,
-                 mode: str = 'normal',
+                 mode: Literal['normal', 'batch', 'format'] = 'normal',
                  token: str = None,
                  queue: asyncio.Queue = None):
         """
@@ -698,7 +698,7 @@ class Aria2HttpClient(_Aria2BaseClient):
     def __init__(self,
                  url: str,
                  identity: IdFactory = None,
-                 mode: str = 'normal',
+                 mode: Literal['normal', 'batch', 'format'] = 'normal',
                  token: str = None,
                  queue=None,
                  client_session: aiohttp.ClientSession = None,
@@ -746,7 +746,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
     def __init__(self,
                  url: str,
                  identity: IdFactory = None,
-                 mode: str = 'normal',
+                 mode: Literal['normal', 'batch', 'format'] = 'normal',
                  token=None,
                  queue: asyncio.Queue = None,
                  client_session: aiohttp.ClientSession = None,
@@ -772,13 +772,15 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
         self.dumps = self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
         self._client_session = client_session or aiohttp.ClientSession(json_serialize=self.dumps)
+        self.client_session = None  # ws
         self.functions: DefaultDict[str, List[CallBack]] = defaultdict(list)  # 存放各个notice的回调
+        self.timeout = asyncio.Event()  # 断线重连的时候用
 
     @classmethod
     async def new(cls,
                   url: str,
                   identity: IdFactory = None,
-                  mode: str = 'normal',
+                  mode: Literal['normal', 'batch', 'format'] = 'normal',
                   token: str = None,
                   queue: asyncio.Queue = None,
                   client_session: aiohttp.ClientSession = None,
@@ -809,6 +811,21 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             return data["result"]
         except KeyError:  # 'error':xxx
             raise Aria2rpcException('unexpected result: {}'.format(data))
+        except Aria2rpcException as err:  # todo reconnect timeout
+            if not self.closed and "timeout" in err.msg:
+                self.timeout.set()
+                while True:
+                    try:
+                        self.client_session = await self._client_session.ws_connect(self.url, **self.kw)
+                        self.timeout.set()
+                        return await self.send_request(req_obj)
+                    except aiohttp.ClientError:
+                        await self._client_session.close()
+                        await asyncio.sleep(1)
+                        self._client_session = aiohttp.ClientSession(json_serialize=self.dumps)
+                        continue
+            else:
+                raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
         except Exception as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
@@ -824,11 +841,21 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         """
         轮询返回数据
         """
-        # TODO 接受函数与处理事件的分开,处理事件的可能很耗时因此阻塞loop
         try:
             while not self.closed:
                 try:
-                    data = await self.client_session.receive_json(loads=self.loads)
+                    data: Tuple[set] = await asyncio.wait((self.client_session.receive_json(loads=self.loads),
+                                                           self.timeout.wait()),
+                                                          return_when=asyncio.tasks.FIRST_COMPLETED)  # todo 前面替换了新的session，这里不知道
+                    task = data[0].pop()
+                    if task.exception():
+                        raise task.exception()
+                    else:
+                        data = task.result()
+                    if isinstance(data, bool):  # 超时发生
+                        self.timeout.clear()
+                        continue
+
                 except TypeError:  # aria2抽了
                     continue
                 if not data or not isinstance(data, dict):
