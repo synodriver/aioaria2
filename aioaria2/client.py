@@ -7,7 +7,7 @@
 import asyncio
 from collections import defaultdict
 from inspect import stack
-from typing import Any, Optional, Union, List, Iterable, Dict, DefaultDict, AsyncGenerator
+from typing import Any, Optional, Union, List, Iterable, Dict, DefaultDict, AsyncGenerator, NoReturn
 import warnings
 
 import aiohttp
@@ -31,7 +31,7 @@ class _Aria2BaseClient:
     def __init__(self,
                  url: str,
                  identity: Optional[IdFactory] = None,
-                 mode: str = 'normal',
+                 mode: Literal['normal', 'batch', 'format'] = 'normal',
                  token: str = None,
                  queue: asyncio.Queue = None):
         """
@@ -501,7 +501,7 @@ class _Aria2BaseClient:
         "OK"
         """
         params = [gid, options]
-        return await self.jsonrpc('changeOption', params)
+        return await self.jsonrpc('changeOption', params)  # type: ignore
 
     async def getGlobalOption(self) -> Union[Dict[str, Any], Any]:
         """
@@ -698,7 +698,7 @@ class Aria2HttpClient(_Aria2BaseClient):
     def __init__(self,
                  url: str,
                  identity: IdFactory = None,
-                 mode: str = 'normal',
+                 mode: Literal['normal', 'batch', 'format'] = 'normal',
                  token: str = None,
                  queue=None,
                  client_session: aiohttp.ClientSession = None,
@@ -746,10 +746,11 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
     def __init__(self,
                  url: str,
                  identity: IdFactory = None,
-                 mode: str = 'normal',
+                 mode: Literal['normal', 'batch', 'format'] = 'normal',
                  token=None,
                  queue: asyncio.Queue = None,
                  client_session: aiohttp.ClientSession = None,
+                 reconnect_interval: int = 1,
                  **kw):
         """
             :param identity: 操作rpc接口的id 工厂函数
@@ -772,16 +773,18 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
         self.dumps = self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
         self._client_session = client_session or aiohttp.ClientSession(json_serialize=self.dumps)
+        self.reconnect_interval = reconnect_interval
         self.functions: DefaultDict[str, List[CallBack]] = defaultdict(list)  # 存放各个notice的回调
 
     @classmethod
     async def new(cls,
                   url: str,
                   identity: IdFactory = None,
-                  mode: str = 'normal',
+                  mode: Literal['normal', 'batch', 'format'] = 'normal',
                   token: str = None,
                   queue: asyncio.Queue = None,
                   client_session: aiohttp.ClientSession = None,
+                  reconnect_interval: int = 1,
                   **kw) -> "Aria2WebsocketTrigger":
         """
         真正创建实例
@@ -794,7 +797,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return: 真正的实例
         """
         try:
-            self = cls(url, identity, mode, token, queue, client_session, **kw)
+            self = cls(url, identity, mode, token, queue, client_session, reconnect_interval, **kw)
             self.client_session = await self._client_session.ws_connect(self.url, **self.kw)
             asyncio.create_task(self.listen())
             return self
@@ -802,13 +805,17 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             await self._client_session.close()
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
-    async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
+    async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], str, NoReturn]:  # type: ignore
         try:
             await self.client_session.send_json(req_obj, dumps=self.dumps)
             data = await ResultStore.fetch(req_obj["id"], self.kw.get("timeout", None) or 10.0)
             return data["result"]
         except KeyError:  # 'error':xxx
             raise Aria2rpcException('unexpected result: {}'.format(data))
+        except Aria2rpcException as err:
+            if not self.closed and "timeout" in err.msg:
+                await asyncio.sleep(self.reconnect_interval)
+                return await self.send_request(req_obj)
         except Exception as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
@@ -824,7 +831,6 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         """
         轮询返回数据
         """
-        # TODO 接受函数与处理事件的分开,处理事件的可能很耗时因此阻塞loop
         try:
             while not self.closed:
                 try:
