@@ -48,7 +48,7 @@ class ResultStore:
         """
         if isinstance(result, dict):
             future = cls._futures.get(result["id"])
-            if future:
+            if future and not future.done():
                 future.set_result(result)
             else:
                 # 没有这个future fetch没有被调用 future=None

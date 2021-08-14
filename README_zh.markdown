@@ -179,4 +179,15 @@ def callback2(trigger, data:dict):
 * 修复了ws_connect中，如果抛异常则连接不会关闭的问题
 * ```Aria2WebsocketTrigger``` 有了一个别名 ```Aria2WebsocketClient```
 
+### v1.3.3
+
+* 修改了笔误造成的问题
+
+### v1.3.4rc1
+
+* 简单处理websocket掉线
+* 修复ping aria2时造成的aria2不讲武德不回复pong的问题
+
+
+
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)

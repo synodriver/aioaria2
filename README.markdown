@@ -177,3 +177,12 @@ def callback2(trigger, data:dict):
 
 * fix  unclosed client_session when exception occurs during ws_connect
 * alias for ```Aria2WebsocketTrigger```,named ```Aria2WebsocketClient```
+
+### v1.3.3
+
+* fix method problems in client
+
+### v1.3.4rc1
+
+* handle reconnect simply
+* handle InvalidstateError while trying to ping aria2
