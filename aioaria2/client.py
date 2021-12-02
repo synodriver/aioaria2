@@ -867,7 +867,17 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.functions[type_].append(func)
-
+        
+    def unregister(self, func: CallBack, type_: str) -> None:
+        """
+        取消注册响应websocket的事件
+        :return:
+        """
+        try:
+            self.functions[type_].remove(func)
+        except ValueError:
+            pass
+            
     # ----------以下这些推荐作为装饰器使用---------------------
 
     def onDownloadStart(self, func: CallBack) -> CallBack:
