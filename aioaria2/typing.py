@@ -15,11 +15,12 @@ Aria2WebsocketTrigger = TypeVar("Aria2WebsocketTrigger", bound="Aria2WebsocketTr
 if TYPE_CHECKING:
     from aioaria2 import Aria2WebsocketTrigger
 
-CallBack = Callable[[Aria2WebsocketTrigger, Dict[str, Any]], Union[Awaitable[Any], Awaitable[None]]]
 """
 Websocket事件的回调函数
 """
-IdFactory = Callable[[], int]
+CallBack = Callable[[Aria2WebsocketTrigger, Dict[str, Any]], Union[Awaitable[Any], Awaitable[None]]]
+
 """
 产生随机id的工厂函数 如果一定要参数可以用functools.partial
 """
+IdFactory = Callable[[], Union[int, Awaitable[int]]]

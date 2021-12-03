@@ -186,3 +186,9 @@ def callback2(trigger, data:dict):
 
 * handle reconnect simply
 * handle InvalidstateError while trying to ping aria2
+
+### v1.3.4
+
+* add async id factory support
+* allow unregister callbacks in websocketclient
+* add contextvars support in ```run_sync```

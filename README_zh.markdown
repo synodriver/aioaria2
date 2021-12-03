@@ -188,6 +188,11 @@ def callback2(trigger, data:dict):
 * 简单处理websocket掉线
 * 修复ping aria2时造成的aria2不讲武德不回复pong的问题
 
+### v1.3.4
+
+* 异步id工厂函数
+* 取消websocketclient注册的回调 ```unregister```
+* ```run_sync``` 加入contextvars支持
 
 
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)
