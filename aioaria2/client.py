@@ -75,9 +75,12 @@ class _Aria2BaseClient:
             else:
                 params.insert(0, token_str)
 
+        identity = self.identity()
+        if asyncio.iscoroutine(identity):
+            identity = await identity
         req_obj = {
             'jsonrpc': '2.0',
-            'id': self.identity(),
+            'id': identity,
             'method': prefix + method,
             'params': params,
         }

@@ -7,6 +7,7 @@ import json
 import base64
 import asyncio
 from functools import wraps, partial
+import contextvars
 from typing import Optional, Any, Awaitable, Dict, Generator, Callable
 
 import aiofiles
@@ -88,7 +89,9 @@ def run_sync(func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
     async def _wrapper(*args: Any, **kwargs: Any) -> Any:
         loop = asyncio.get_running_loop()
         pfunc = partial(func, *args, **kwargs)
-        result = await loop.run_in_executor(None, pfunc)
+        context = contextvars.copy_context()
+        context_run = context.run
+        result = await loop.run_in_executor(None, context_run, pfunc)
         return result
 
     return _wrapper
