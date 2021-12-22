@@ -775,9 +775,11 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         self.kw = kw
         self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
         self.dumps = self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
-        self._client_session = client_session or aiohttp.ClientSession(json_serialize=self.dumps)
+        self._client_session = client_session or aiohttp.ClientSession(
+            json_serialize=self.dumps)  # type: aiohttp.ClientSession
         self.reconnect_interval = reconnect_interval
         self.functions: DefaultDict[str, List[CallBack]] = defaultdict(list)  # 存放各个notice的回调
+        self._listen_task = None  # type: asyncio.Task
 
     @classmethod
     async def new(cls,
@@ -802,7 +804,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         try:
             self = cls(url, identity, mode, token, queue, client_session, reconnect_interval, **kw)
             self.client_session = await self._client_session.ws_connect(self.url, **self.kw)
-            asyncio.create_task(self.listen())
+            self._listen_task = asyncio.create_task(self.listen())
             return self
         except aiohttp.ClientError as err:
             await self._client_session.close()
@@ -827,6 +829,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         return self.client_session.closed
 
     async def close(self) -> None:
+        if not self._listen_task.cancelled():
+            self._listen_task.cancel()
         await super().close()
         await self._client_session.close()
 
@@ -843,8 +847,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
                 if not data or not isinstance(data, dict):
                     continue
                 asyncio.create_task(self.handle_event(data))
-        finally:
-            await self.close()
+        except asyncio.CancelledError:
+            pass
 
     async def handle_event(self, data: dict) -> None:
         """
@@ -870,7 +874,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.functions[type_].append(func)
-        
+
     def unregister(self, func: CallBack, type_: str) -> None:
         """
         取消注册响应websocket的事件
@@ -880,7 +884,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             self.functions[type_].remove(func)
         except ValueError:
             pass
-            
+
     # ----------以下这些推荐作为装饰器使用---------------------
 
     def onDownloadStart(self, func: CallBack) -> CallBack:
@@ -940,10 +944,9 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
 
     async def __aenter__(self):
         if not hasattr(self, "client_session"):
-            self._client_session = aiohttp.ClientSession()
             self.client_session: aiohttp.ClientWebSocketResponse = await self._client_session.ws_connect(self.url,
                                                                                                          **self.kw)
-            asyncio.create_task(self.listen())
+            self._listen_task = asyncio.create_task(self.listen())
             return self
         return self
 
