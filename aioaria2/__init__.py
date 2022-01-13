@@ -7,7 +7,7 @@ from aioaria2.server import Aria2Server, AsyncAria2Server
 from aioaria2.exceptions import Aria2rpcException
 from aioaria2.utils import run_sync, add_async_callback
 
-__version__ = "1.3.4"
+__version__ = "1.3.5rc1"
 
 __author__ = "synodriver"
 __all__ = ["Aria2Server", "AsyncAria2Server",

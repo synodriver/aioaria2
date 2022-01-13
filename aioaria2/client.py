@@ -829,7 +829,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         return self.client_session.closed
 
     async def close(self) -> None:
-        if not self._listen_task.cancelled():
+        if self._listen_task and not self._listen_task.cancelled():
             self._listen_task.cancel()
         await super().close()
         await self._client_session.close()

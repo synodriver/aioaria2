@@ -69,7 +69,7 @@ def on_download_complete(trigger, data):
 
 
 async def main():
-    client: aioaria2.Aria2WebsocketTrigger = await aioaria2.Aria2WebsocketTrigger.new("http://127.0.0.1:6800/jsonrpc",
+    client: aioaria2.Aria2WebsocketClient = await aioaria2.Aria2WebsocketClient.new("http://127.0.0.1:6800/jsonrpc",
                                                                                       token="token",
                                                                                       loads=ujson.loads,
                                                                                       dumps=ujson.dumps)
@@ -193,6 +193,10 @@ def callback2(trigger, data:dict):
 * 异步id工厂函数
 * 取消websocketclient注册的回调 ```unregister```
 * ```run_sync``` 加入contextvars支持
+
+### v1.3.5rc1
+
+* 更好的关闭
 
 
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)

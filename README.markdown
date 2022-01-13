@@ -68,7 +68,7 @@ def on_download_complete(trigger, data):
 
 
 async def main():
-    client: aioaria2.Aria2WebsocketTrigger = await aioaria2.Aria2WebsocketTrigger.new("http://127.0.0.1:6800/jsonrpc",
+    client: aioaria2.Aria2WebsocketClient = await aioaria2.Aria2WebsocketClient.new("http://127.0.0.1:6800/jsonrpc",
                                                                                       token="token",
                                                                                       loads=ujson.loads,
                                                                                       dumps=ujson.dumps)
@@ -192,3 +192,7 @@ def callback2(trigger, data:dict):
 * add async id factory support
 * allow unregister callbacks in websocketclient
 * add contextvars support in ```run_sync```
+
+### v1.3.5rc1
+
+* graceful shutdown
