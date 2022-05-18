@@ -57,10 +57,7 @@ class Aria2Server(metaclass=SingletonType):
         :param args: 启动aria2的命令行参数
         :param daemon: True:aria2随python解释器同生共死
         """
-        if args:
-            self.cmd = list(args)
-        else:
-            self.cmd = []
+        self.cmd = list(args) if args else []
         if daemon:
             self.cmd.append('--stop-with-process={:d}'.format(os.getpid()))
         self.process: subprocess.Popen = None  # type: ignore
@@ -144,5 +141,4 @@ class AsyncAria2Server(Aria2Server):
             await self.terminate()
 
 
-if __name__ == "__main__":
-    pass
+pass

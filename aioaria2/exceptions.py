@@ -16,4 +16,4 @@ class Aria2rpcException(Exception):
         self.connection_error = connection_error
 
     def __str__(self):
-        return '{}: {}'.format(self.__class__.__name__, self.msg)
+        return f'{self.__class__.__name__}: {self.msg}'

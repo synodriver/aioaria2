@@ -71,9 +71,11 @@ class ControlFile:
         bitfield_length = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
         bitfield = reader.read(bitfield_length)
         num_inflight_piece = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
-        inflight_pieces = []
-        for _ in range(num_inflight_piece):
-            inflight_pieces.append(InFlightPiece.from_reader(reader, version))
+        inflight_pieces = [
+            InFlightPiece.from_reader(reader, version)
+            for _ in range(num_inflight_piece)
+        ]
+
         return cls(
             version=version,
             ext=ext,
@@ -113,10 +115,7 @@ class NodeInfo:
     def from_reader(cls, reader: IO[bytes]) -> "NodeInfo":
         plen = int.from_bytes(reader.read(1), "big")
         reader.read(7)
-        if plen == 6:
-            class_ = IPv4Address
-        else:
-            class_ = IPv6Address
+        class_ = IPv4Address if plen == 6 else IPv6Address
         temp = reader.read(plen)
         compact_peer_info = (class_(temp[:-2]), int.from_bytes(temp[-2:], "big"))
         reader.read(24 - plen)
@@ -173,9 +172,7 @@ class DHTFile:
         reader.read(4)
         num_node = int.from_bytes(reader.read(4), "big")
         reader.read(4)
-        nodes = []
-        for _ in range(num_node):
-            nodes.append(NodeInfo.from_reader(reader))
+        nodes = [NodeInfo.from_reader(reader) for _ in range(num_node)]
         return cls(
             mgc=mgc,
             fmt=fmt,
