@@ -43,10 +43,7 @@ class _Aria2BaseClient:
                 format - 返回rpc请求json结构
             :param token: rpc服务器密码 (用 `--rpc-secret`设置)
         """
-        if queue is None:
-            self.queue: asyncio.Queue = asyncio.Queue()
-        else:
-            self.queue = queue
+        self.queue = asyncio.Queue() if queue is None else queue
         self.identity = identity or ResultStore.get_id
         self.url = url
         self.mode = mode
@@ -65,7 +62,7 @@ class _Aria2BaseClient:
             params = []
 
         if self.token is not None:
-            token_str = 'token:{}'.format(self.token)
+            token_str = f'token:{self.token}'
             if method == 'multicall':
                 for param in params[0]:
                     try:
@@ -393,10 +390,7 @@ class _Aria2BaseClient:
 
         :example:  await client.tellActive(xxxxx,["status","downloadSpeed"])
         """
-        if keys:
-            params = [keys]
-        else:
-            params = None  # type: ignore
+        params = [keys] if keys else None
         return await self.jsonrpc('tellActive', params)
 
     async def tellWaiting(self, offset: int, num: int, keys: List[str] = None) -> Union[Dict[str, Any], Any]:
@@ -683,7 +677,7 @@ class _Aria2BaseClient:
         ]
         results = await self.multicall(methods)
         if results:
-            status = dict((r[0]['gid'], r[0]['status']) for r in results)
+            status = {r[0]['gid']: r[0]['status'] for r in results}
             for gid in gids:
                 try:
                     yield status[gid]
@@ -732,9 +726,8 @@ class Aria2HttpClient(_Aria2BaseClient):
                 try:
                     data = await response.json(loads=self.loads)
                     return data["result"]
-                # 没有result就是异常
                 except KeyError:
-                    raise Aria2rpcException('unexpected result: {}'.format(data))
+                    raise Aria2rpcException(f'unexpected result: {data}')
         except aiohttp.ClientConnectionError as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
@@ -770,7 +763,11 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         """
         if (stack()[1].function) not in ("new", "eval_in_context"):
             warnings.warn(
-                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + ".new"))
+                "do not init directly,use {0} instead".format(
+                    f"await {self.__class__.__name__}.new"
+                )
+            )
+
         super().__init__(url, identity, mode, token, queue)
         self.kw = kw
         self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
@@ -816,7 +813,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             data = await ResultStore.fetch(req_obj["id"], self.kw.get("timeout", None) or 10.0)
             return data["result"]
         except KeyError:  # 'error':xxx
-            raise Aria2rpcException('unexpected result: {}'.format(data))
+            raise Aria2rpcException(f'unexpected result: {data}')
         except Aria2rpcException as err:
             if not self.closed and "timeout" in err.msg:
                 await asyncio.sleep(self.reconnect_interval)

@@ -49,13 +49,11 @@ class ResultStore:
         """
         if isinstance(result, dict):
             future = cls._futures.get(result["id"])
-            if future and not future.done():
-                future.set_result(result)
-            else:
+            if not future or future.done():
                 # 没有这个future fetch没有被调用 future=None
                 future = asyncio.get_event_loop().create_future()
                 cls._futures[result["id"]] = future
-                future.set_result(result)
+            future.set_result(result)
 
     @classmethod
     async def fetch(cls, identity: int, timeout: Optional[float] = None) -> Dict[str, Any]:
@@ -133,12 +131,11 @@ def get_status(response: Dict) -> Any:
     """
     Process a status response.
     """
-    if response:
-        try:
-            return response['status']
-        except KeyError:
-            return 'error'
-    else:
+    if not response:
+        return 'error'
+    try:
+        return response['status']
+    except KeyError:
         return 'error'
 
 
@@ -153,9 +150,7 @@ def read_configfile(path: str, prefix: str = "--") -> Generator[str, None, None]
         for line in f.readlines():
             line = line.strip()
             if line and not line.startswith("#"):
-                temp = prefix + line
-                yield temp
+                yield prefix + line
 
 
-if __name__ == "__main__":
-    pass
+pass

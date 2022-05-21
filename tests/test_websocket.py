@@ -44,8 +44,6 @@ async def get_client():
         # pprint(await client.addUri(["http://odrive.aptx.xin/%E5%8A%A8%E7%94%BB/2004/200445.zip"]))
         pprint(await client.getVersion())
 
-    pass
-
 
 async def get_trigger():
     try:
@@ -55,9 +53,7 @@ async def get_trigger():
         client.onDownloadComplete(callback2)
         await client.addUri(["https://www.baidu.com"])
     except aioaria2.Aria2rpcException as e:
-        pass
         print("can't connect ")
-        pass
 
 
 def main():

@@ -11,8 +11,6 @@ async def main():
     await server.wait()
     print("不等他")
 
-    pass
-
 
 if __name__ == "__main__":
     # if sys.platform == "win32":
