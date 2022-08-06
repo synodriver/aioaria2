@@ -196,3 +196,14 @@ def callback2(trigger, data:dict):
 ### v1.3.5rc1
 
 * graceful shutdown
+
+### v1.3.5rc2
+
+* parser for aria2files
+
+```python
+from pprint import pprint
+from aioaria2 import DHTFile
+
+pprint(DHTFile.from_file("dht.dat"))
+```
