@@ -43,10 +43,7 @@ class _Aria2BaseClient:
                 format - 返回rpc请求json结构
             :param token: rpc服务器密码 (用 `--rpc-secret`设置)
         """
-        if queue is None:
-            self.queue: asyncio.Queue = asyncio.Queue()
-        else:
-            self.queue = queue
+        self.queue = asyncio.Queue() if queue is None else queue
         self.identity = identity or ResultStore.get_id
         self.url = url
         self.mode = mode
@@ -65,7 +62,7 @@ class _Aria2BaseClient:
             params = []
 
         if self.token is not None:
-            token_str = 'token:{}'.format(self.token)
+            token_str = f'token:{self.token}'
             if method == 'multicall':
                 for param in params[0]:
                     try:
@@ -393,10 +390,7 @@ class _Aria2BaseClient:
 
         :example:  await client.tellActive(xxxxx,["status","downloadSpeed"])
         """
-        if keys:
-            params = [keys]
-        else:
-            params = None  # type: ignore
+        params = [keys] if keys else None
         return await self.jsonrpc('tellActive', params)
 
     async def tellWaiting(self, offset: int, num: int, keys: List[str] = None) -> Union[Dict[str, Any], Any]:
@@ -683,7 +677,7 @@ class _Aria2BaseClient:
         ]
         results = await self.multicall(methods)
         if results:
-            status = dict((r[0]['gid'], r[0]['status']) for r in results)
+            status = {r[0]['gid']: r[0]['status'] for r in results}
             for gid in gids:
                 try:
                     yield status[gid]
@@ -732,9 +726,8 @@ class Aria2HttpClient(_Aria2BaseClient):
                 try:
                     data = await response.json(loads=self.loads)
                     return data["result"]
-                # 没有result就是异常
                 except KeyError:
-                    raise Aria2rpcException('unexpected result: {}'.format(data))
+                    raise Aria2rpcException(f'unexpected result: {data}')
         except aiohttp.ClientConnectionError as err:
             raise Aria2rpcException(str(err), connection_error=("Cannot connect" in str(err))) from err
 
@@ -770,14 +763,20 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         """
         if (stack()[1].function) not in ("new", "eval_in_context"):
             warnings.warn(
-                "do not init directly,use {0} instead".format("await " + self.__class__.__name__ + ".new"))
+                "do not init directly,use {0} instead".format(
+                    f"await {self.__class__.__name__}.new"
+                )
+            )
+
         super().__init__(url, identity, mode, token, queue)
         self.kw = kw
         self.loads = self.kw.pop("loads") if "loads" in self.kw else DEFAULT_JSON_DECODER  # json serialize
         self.dumps = self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
-        self._client_session = client_session or aiohttp.ClientSession(json_serialize=self.dumps)
+        self._client_session = client_session or aiohttp.ClientSession(
+            json_serialize=self.dumps)  # type: aiohttp.ClientSession
         self.reconnect_interval = reconnect_interval
         self.functions: DefaultDict[str, List[CallBack]] = defaultdict(list)  # 存放各个notice的回调
+        self._listen_task = None  # type: asyncio.Task
 
     @classmethod
     async def new(cls,
@@ -802,7 +801,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         try:
             self = cls(url, identity, mode, token, queue, client_session, reconnect_interval, **kw)
             self.client_session = await self._client_session.ws_connect(self.url, **self.kw)
-            asyncio.create_task(self.listen())
+            self._listen_task = asyncio.create_task(self.listen())
             return self
         except aiohttp.ClientError as err:
             await self._client_session.close()
@@ -814,7 +813,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             data = await ResultStore.fetch(req_obj["id"], self.kw.get("timeout", None) or 10.0)
             return data["result"]
         except KeyError:  # 'error':xxx
-            raise Aria2rpcException('unexpected result: {}'.format(data))
+            raise Aria2rpcException(f'unexpected result: {data}')
         except Aria2rpcException as err:
             if not self.closed and "timeout" in err.msg:
                 await asyncio.sleep(self.reconnect_interval)
@@ -827,6 +826,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         return self.client_session.closed
 
     async def close(self) -> None:
+        if self._listen_task and not self._listen_task.cancelled():
+            self._listen_task.cancel()
         await super().close()
         await self._client_session.close()
 
@@ -843,8 +844,8 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
                 if not data or not isinstance(data, dict):
                     continue
                 asyncio.create_task(self.handle_event(data))
-        finally:
-            await self.close()
+        except asyncio.CancelledError:
+            pass
 
     async def handle_event(self, data: dict) -> None:
         """
@@ -870,7 +871,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         :return:
         """
         self.functions[type_].append(func)
-        
+
     def unregister(self, func: CallBack, type_: str) -> None:
         """
         取消注册响应websocket的事件
@@ -880,7 +881,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             self.functions[type_].remove(func)
         except ValueError:
             pass
-            
+
     # ----------以下这些推荐作为装饰器使用---------------------
 
     def onDownloadStart(self, func: CallBack) -> CallBack:
@@ -940,10 +941,9 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
 
     async def __aenter__(self):
         if not hasattr(self, "client_session"):
-            self._client_session = aiohttp.ClientSession()
             self.client_session: aiohttp.ClientWebSocketResponse = await self._client_session.ws_connect(self.url,
                                                                                                          **self.kw)
-            asyncio.create_task(self.listen())
+            self._listen_task = asyncio.create_task(self.listen())
             return self
         return self
 
