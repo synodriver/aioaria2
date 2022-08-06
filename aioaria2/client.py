@@ -84,9 +84,7 @@ class _Aria2BaseClient:
         if self.mode == 'batch':
             await self.queue.put(req_obj)
             return None
-        if self.mode == 'format':
-            return req_obj
-        return await self.send_request(req_obj)
+        return req_obj if self.mode == 'format' else await self.send_request(req_obj)
 
     async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
         raise NotImplementedError
