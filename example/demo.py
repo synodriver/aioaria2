@@ -3,8 +3,9 @@
 import asyncio
 from pprint import pprint
 
-import aioaria2
 import ujson
+
+import aioaria2
 
 HOST = "http://127.0.0.1:6800/jsonrpc"
 
@@ -21,10 +22,12 @@ async def on_download_complete(trigger: aioaria2.Aria2WebsocketTrigger, data: di
 
 
 async def main():
-    client: aioaria2.Aria2WebsocketTrigger = await aioaria2.Aria2WebsocketTrigger.new("http://127.0.0.1:6800/jsonrpc",
-                                                                                      token="token",
-                                                                                      loads=ujson.loads,
-                                                                                      dumps=ujson.dumps)
+    client: aioaria2.Aria2WebsocketTrigger = await aioaria2.Aria2WebsocketTrigger.new(
+        "http://127.0.0.1:6800/jsonrpc",
+        token="token",
+        loads=ujson.loads,
+        dumps=ujson.dumps,
+    )
     client.onDownloadError(on_download_error)
     client.onDownloadComplete(on_download_complete)
     pprint(await client.addUri(["http://www.google.com"]))  #

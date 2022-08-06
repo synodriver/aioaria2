@@ -10,7 +10,9 @@ class Testarser(TestCase):
         s = BytesIO()
         data = ControlFile.from_file("180P_225K_242958531.webm.aria2")
         data.save(s)
-        self.assertEqual(s.getvalue(), open("180P_225K_242958531.webm.aria2", "rb").read())
+        self.assertEqual(
+            s.getvalue(), open("180P_225K_242958531.webm.aria2", "rb").read()
+        )
 
     def test_DHTFile(self):
         s = BytesIO()

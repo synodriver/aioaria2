@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import sys
+
 import aioaria2
 
 
 async def main():
-    server = aioaria2.AsyncAria2Server(r"128aria2c.exe",
-                                       r"--conf-path=aria2.conf", "--rpc-secret=admin", daemon=True)
+    server = aioaria2.AsyncAria2Server(
+        r"128aria2c.exe", r"--conf-path=aria2.conf", "--rpc-secret=admin", daemon=True
+    )
     await server.start()
     await server.wait()
     print("不等他")
@@ -23,6 +25,5 @@ if __name__ == "__main__":
     # main()
     def a(c=1, d=2):
         print(c, d)
-
 
     a(None)

@@ -1,14 +1,17 @@
-import unittest
 import asyncio
+import unittest
 from pprint import pprint
-import aioaria2
 
 import ujson
+
+import aioaria2
 
 
 class TestHTTP(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.client = aioaria2.Aria2HttpClient("http://aria.blackjoe.art:2082/jsonrpc", token="a489451594cda0792df1")
+        self.client = aioaria2.Aria2HttpClient(
+            "http://aria.blackjoe.art:2082/jsonrpc", token="a489451594cda0792df1"
+        )
 
     async def test_addUri(self):
         gid = await self.client.addUri(["https://www.google.com"])
@@ -31,10 +34,12 @@ class TestWebsocket(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         # self.client = aioaria2.Aria2HttpClient("test", "http://aria.blackjoe.art:2082/jsonrpc",
         #                                        token="a489451594cda0792df1")
-        self.trigger = await aioaria2.Aria2WebsocketTrigger.new("http://aria.blackjoe.art:2082/jsonrpc",
-                                                                token="a489451594cda0792df1",
-                                                                loads=ujson.loads,
-                                                                dumps=ujson.dumps)
+        self.trigger = await aioaria2.Aria2WebsocketTrigger.new(
+            "http://aria.blackjoe.art:2082/jsonrpc",
+            token="a489451594cda0792df1",
+            loads=ujson.loads,
+            dumps=ujson.dumps,
+        )
 
         # asyncio.get_running_loop().create_task(self.trigger.listen())
         @self.trigger.onDownloadStart
@@ -67,10 +72,14 @@ class TestWebsocket(unittest.IsolatedAsyncioTestCase):
         print(self.trigger.functions)
 
         self.assertTrue(isinstance(data, dict))
-        self.assertTrue(len(self.trigger.functions["aria2.onDownloadStart"]) == 2,
-                        len(self.trigger.functions["aria2.onDownloadStart"]))
-        self.assertTrue(len(self.trigger.functions["aria2.onDownloadComplete"]) == 2,
-                        len(self.trigger.functions["aria2.onDownloadComplete"]))
+        self.assertTrue(
+            len(self.trigger.functions["aria2.onDownloadStart"]) == 2,
+            len(self.trigger.functions["aria2.onDownloadStart"]),
+        )
+        self.assertTrue(
+            len(self.trigger.functions["aria2.onDownloadComplete"]) == 2,
+            len(self.trigger.functions["aria2.onDownloadComplete"]),
+        )
 
     async def test_onDownloadStart_and_Stop(self):
 
@@ -79,22 +88,38 @@ class TestWebsocket(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(isinstance(data, str), data)
         while True:
             if self.onDownloadComplete1 is not None:
-                self.assertEqual(self.onDownloadStart1["method"], "aria2.onDownloadStart",
-                                 "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadStart",
-                                                               self.onDownloadStart1["method"]))
-                self.assertEqual(self.onDownloadStart2["method"], "aria2.onDownloadStart",
-                                 "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadStart",
-                                                               self.onDownloadStart1["method"]))
+                self.assertEqual(
+                    self.onDownloadStart1["method"],
+                    "aria2.onDownloadStart",
+                    "回调断言失败,期待{0} 接收到了{1}".format(
+                        "aria2.onDownloadStart", self.onDownloadStart1["method"]
+                    ),
+                )
+                self.assertEqual(
+                    self.onDownloadStart2["method"],
+                    "aria2.onDownloadStart",
+                    "回调断言失败,期待{0} 接收到了{1}".format(
+                        "aria2.onDownloadStart", self.onDownloadStart1["method"]
+                    ),
+                )
                 break
             await asyncio.sleep(1)
         while True:
             if self.onDownloadComplete1 is not None:
-                self.assertEqual(self.onDownloadComplete1["method"], "aria2.onDownloadComplete",
-                                 "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadComplete",
-                                                               self.onDownloadComplete1["method"]))
-                self.assertEqual(self.onDownloadComplete2["method"], "aria2.onDownloadComplete",
-                                 "回调断言失败,期待{0} 接收到了{1}".format("aria2.onDownloadComplete",
-                                                               self.onDownloadComplete2["method"]))
+                self.assertEqual(
+                    self.onDownloadComplete1["method"],
+                    "aria2.onDownloadComplete",
+                    "回调断言失败,期待{0} 接收到了{1}".format(
+                        "aria2.onDownloadComplete", self.onDownloadComplete1["method"]
+                    ),
+                )
+                self.assertEqual(
+                    self.onDownloadComplete2["method"],
+                    "aria2.onDownloadComplete",
+                    "回调断言失败,期待{0} 接收到了{1}".format(
+                        "aria2.onDownloadComplete", self.onDownloadComplete2["method"]
+                    ),
+                )
                 break
             await asyncio.sleep(1)
 
@@ -102,5 +127,5 @@ class TestWebsocket(unittest.IsolatedAsyncioTestCase):
         await self.trigger.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

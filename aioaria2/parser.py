@@ -2,10 +2,10 @@
 """
 See https://aria2.github.io/manual/en/html/technical-notes.html
 """
-from typing import Union, IO, List
-from pathlib import Path
-from ipaddress import IPv4Address, IPv6Address
 from dataclasses import dataclass
+from ipaddress import IPv4Address, IPv6Address
+from pathlib import Path
+from typing import IO, List, Union
 
 
 @dataclass
@@ -19,19 +19,23 @@ class InFlightPiece:
     def from_reader(cls, reader: IO[bytes], version: int) -> "InFlightPiece":
         index = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
         length = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
-        piece_bitfield_length = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
+        piece_bitfield_length = int.from_bytes(
+            reader.read(4), "big" if version == 1 else "little"
+        )
         piece_bitfield = reader.read(piece_bitfield_length)
         return cls(
             index=index,
             length=length,
             piece_bitfield_length=piece_bitfield_length,
-            piece_bitfield=piece_bitfield
+            piece_bitfield=piece_bitfield,
         )
 
     def save(self, file: IO[bytes], version: int) -> None:
         file.write(self.index.to_bytes(4, "big" if version == 1 else "little"))
         file.write(self.length.to_bytes(4, "big" if version == 1 else "little"))
-        file.write(len(self.piece_bitfield).to_bytes(4, "big" if version == 1 else "little"))
+        file.write(
+            len(self.piece_bitfield).to_bytes(4, "big" if version == 1 else "little")
+        )
         file.write(self.piece_bitfield)
 
 
@@ -40,6 +44,7 @@ class ControlFile:
     """
     Parse .aria2 files
     """
+
     version: int
     ext: bytes
     info_hash_length: int
@@ -61,16 +66,30 @@ class ControlFile:
     def from_reader(cls, reader: IO[bytes]) -> "ControlFile":
         version = int.from_bytes(reader.read(2), "big")
         ext = reader.read(4)
-        info_hash_length = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
+        info_hash_length = int.from_bytes(
+            reader.read(4), "big" if version == 1 else "little"
+        )
         if info_hash_length == 0 and ext[3] & 1 == 1:
-            raise ValueError("\"infoHashCheck\" extension is enabled but info hash length is 0")
+            raise ValueError(
+                '"infoHashCheck" extension is enabled but info hash length is 0'
+            )
         info_hash = reader.read(info_hash_length)
-        piece_length = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
-        total_length = int.from_bytes(reader.read(8), "big" if version == 1 else "little")
-        upload_length = int.from_bytes(reader.read(8), "big" if version == 1 else "little")
-        bitfield_length = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
+        piece_length = int.from_bytes(
+            reader.read(4), "big" if version == 1 else "little"
+        )
+        total_length = int.from_bytes(
+            reader.read(8), "big" if version == 1 else "little"
+        )
+        upload_length = int.from_bytes(
+            reader.read(8), "big" if version == 1 else "little"
+        )
+        bitfield_length = int.from_bytes(
+            reader.read(4), "big" if version == 1 else "little"
+        )
         bitfield = reader.read(bitfield_length)
-        num_inflight_piece = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
+        num_inflight_piece = int.from_bytes(
+            reader.read(4), "big" if version == 1 else "little"
+        )
         inflight_pieces = [
             InFlightPiece.from_reader(reader, version)
             for _ in range(num_inflight_piece)
@@ -87,20 +106,34 @@ class ControlFile:
             bitfield_length=bitfield_length,
             bitfield=bitfield,
             num_inflight_piece=num_inflight_piece,
-            inflight_pieces=inflight_pieces
+            inflight_pieces=inflight_pieces,
         )
 
     def save(self, file: IO[bytes]) -> None:
         file.write(self.version.to_bytes(2, "big" if self.version == 1 else "little"))
         file.write(self.ext)
-        file.write(len(self.info_hash).to_bytes(4, "big" if self.version == 1 else "little"))
+        file.write(
+            len(self.info_hash).to_bytes(4, "big" if self.version == 1 else "little")
+        )
         file.write(self.info_hash)
-        file.write(self.piece_length.to_bytes(4, "big" if self.version == 1 else "little"))
-        file.write(self.total_length.to_bytes(8, "big" if self.version == 1 else "little"))
-        file.write(self.upload_length.to_bytes(8, "big" if self.version == 1 else "little"))
-        file.write(len(self.bitfield).to_bytes(4, "big" if self.version == 1 else "little"))
+        file.write(
+            self.piece_length.to_bytes(4, "big" if self.version == 1 else "little")
+        )
+        file.write(
+            self.total_length.to_bytes(8, "big" if self.version == 1 else "little")
+        )
+        file.write(
+            self.upload_length.to_bytes(8, "big" if self.version == 1 else "little")
+        )
+        file.write(
+            len(self.bitfield).to_bytes(4, "big" if self.version == 1 else "little")
+        )
         file.write(self.bitfield)
-        file.write(len(self.inflight_pieces).to_bytes(4, "big" if self.version == 1 else "little"))
+        file.write(
+            len(self.inflight_pieces).to_bytes(
+                4, "big" if self.version == 1 else "little"
+            )
+        )
         for piece in self.inflight_pieces:
             piece.save(file, self.version)
 
@@ -121,11 +154,7 @@ class NodeInfo:
         reader.read(24 - plen)
         node_id = reader.read(20)
         reader.read(4)
-        return cls(
-            plen=plen,
-            compact_peer_info=compact_peer_info,
-            node_id=node_id
-        )
+        return cls(plen=plen, compact_peer_info=compact_peer_info, node_id=node_id)
 
     def save(self, file: IO[bytes]) -> None:
         file.write(self.plen.to_bytes(1, "big"))
@@ -144,6 +173,7 @@ class DHTFile:
     """
     Parse dht.dat/dht6.dat files
     """
+
     mgc: bytes
     fmt: bytes
     ver: bytes
@@ -160,9 +190,9 @@ class DHTFile:
     @classmethod
     def from_reader(cls, reader: IO[bytes]) -> "DHTFile":
         mgc = reader.read(2)
-        assert mgc == b'\xa1\xa2', "wrong magic number"
+        assert mgc == b"\xa1\xa2", "wrong magic number"
         fmt = reader.read(1)
-        assert fmt == b'\x02', "wrong format idr"
+        assert fmt == b"\x02", "wrong format idr"
         ver = reader.read(2)
         # assert ver == b'\x00\x03', "wrong version number"
         reader.read(3)
@@ -180,7 +210,7 @@ class DHTFile:
             mtime=mtime,
             localnode_id=localnode_id,
             num_node=num_node,
-            nodes=nodes
+            nodes=nodes,
         )
 
     def save(self, file: IO[bytes]) -> None:

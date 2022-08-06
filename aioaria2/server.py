@@ -3,9 +3,9 @@
 本模块负责管理aria2进程
 """
 
+import asyncio
 import os
 import subprocess
-import asyncio
 import threading
 
 # --------------------------#
@@ -41,7 +41,7 @@ class SingletonType(type):
     _instance_lock = threading.Lock()
 
     def __call__(cls, *args, **kwargs):
-        if not hasattr(cls, '_instance'):
+        if not hasattr(cls, "_instance"):
             with cls._instance_lock:  # 加锁
                 cls._instance = super().__call__(*args, **kwargs)
         return cls._instance
@@ -59,7 +59,7 @@ class Aria2Server(metaclass=SingletonType):
         """
         self.cmd = list(args) if args else []
         if daemon:
-            self.cmd.append('--stop-with-process={:d}'.format(os.getpid()))
+            self.cmd.append("--stop-with-process={:d}".format(os.getpid()))
         self.process: subprocess.Popen = None  # type: ignore
         self._is_running = False
 

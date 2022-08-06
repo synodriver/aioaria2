@@ -3,8 +3,9 @@
 import asyncio
 
 import aiohttp
-import aioaria2
 from bs4 import BeautifulSoup
+
+import aioaria2
 
 start_url = "https://movie.douban.com/top250?start={0}&filter="
 
@@ -18,10 +19,14 @@ SEC = "token"
 
 def parse(html: str):
     soup = BeautifulSoup(html, "lxml")
-    return [tag.attrs["src"] for tag in soup.find_all(name="img", attrs={"width": "100"})]
+    return [
+        tag.attrs["src"] for tag in soup.find_all(name="img", attrs={"width": "100"})
+    ]
 
 
-async def fetch(session: aiohttp.ClientSession, url: str, client: aioaria2.Aria2HttpClient):
+async def fetch(
+    session: aiohttp.ClientSession, url: str, client: aioaria2.Aria2HttpClient
+):
     async with session.get(url, headers=header) as resp:
         pic_urls = parse(await resp.text())
         for url in pic_urls:
@@ -29,7 +34,9 @@ async def fetch(session: aiohttp.ClientSession, url: str, client: aioaria2.Aria2
 
 
 async def get_client():
-    async with aioaria2.Aria2HttpClient(HOST, token=SEC) as client, aiohttp.ClientSession() as session:
+    async with aioaria2.Aria2HttpClient(
+        HOST, token=SEC
+    ) as client, aiohttp.ClientSession() as session:
         urls = [start_url.format(i * 25) for i in range(10)]  # 每个页面
         tasks = [asyncio.create_task(fetch(session, url, client)) for url in urls]
         await asyncio.wait(tasks)
