@@ -199,11 +199,15 @@ def callback2(trigger, data:dict):
 
 ### v1.3.5rc2
 
-* parser for aria2files
+* add parser for aria2 files
 
 ```python
 from pprint import pprint
 from aioaria2 import DHTFile
 
-pprint(DHTFile.from_file("dht.dat"))
+pprint(DHTFile.from_file2("dht.dat"))
 ```
+
+### v1.3.5rc3
+
+* add strong ref to pending tasks

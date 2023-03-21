@@ -16,13 +16,13 @@ class InFlightPiece:
     piece_bitfield: bytes
 
     @classmethod
-    def from_reader(cls, reader: IO[bytes], version: int) -> "InFlightPiece":
-        index = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
-        length = int.from_bytes(reader.read(4), "big" if version == 1 else "little")
+    def from_file(cls, file: IO[bytes], version: int) -> "InFlightPiece":
+        index = int.from_bytes(file.read(4), "big" if version == 1 else "little")
+        length = int.from_bytes(file.read(4), "big" if version == 1 else "little")
         piece_bitfield_length = int.from_bytes(
-            reader.read(4), "big" if version == 1 else "little"
+            file.read(4), "big" if version == 1 else "little"
         )
-        piece_bitfield = reader.read(piece_bitfield_length)
+        piece_bitfield = file.read(piece_bitfield_length)
         return cls(
             index=index,
             length=length,
@@ -58,41 +58,36 @@ class ControlFile:
     inflight_pieces: List[InFlightPiece]
 
     @classmethod
-    def from_file(cls, file: Union[str, Path]) -> "ControlFile":
+    def from_file2(cls, file: Union[str, Path]) -> "ControlFile":
         with open(file, "rb") as f:
             return cls.from_reader(f)
 
     @classmethod
-    def from_reader(cls, reader: IO[bytes]) -> "ControlFile":
-        version = int.from_bytes(reader.read(2), "big")
-        ext = reader.read(4)
+    def from_file(cls, file: IO[bytes]) -> "ControlFile":
+        version = int.from_bytes(file.read(2), "big")
+        ext = file.read(4)
         info_hash_length = int.from_bytes(
-            reader.read(4), "big" if version == 1 else "little"
+            file.read(4), "big" if version == 1 else "little"
         )
         if info_hash_length == 0 and ext[3] & 1 == 1:
             raise ValueError(
                 '"infoHashCheck" extension is enabled but info hash length is 0'
             )
-        info_hash = reader.read(info_hash_length)
-        piece_length = int.from_bytes(
-            reader.read(4), "big" if version == 1 else "little"
-        )
-        total_length = int.from_bytes(
-            reader.read(8), "big" if version == 1 else "little"
-        )
+        info_hash = file.read(info_hash_length)
+        piece_length = int.from_bytes(file.read(4), "big" if version == 1 else "little")
+        total_length = int.from_bytes(file.read(8), "big" if version == 1 else "little")
         upload_length = int.from_bytes(
-            reader.read(8), "big" if version == 1 else "little"
+            file.read(8), "big" if version == 1 else "little"
         )
         bitfield_length = int.from_bytes(
-            reader.read(4), "big" if version == 1 else "little"
+            file.read(4), "big" if version == 1 else "little"
         )
-        bitfield = reader.read(bitfield_length)
+        bitfield = file.read(bitfield_length)
         num_inflight_piece = int.from_bytes(
-            reader.read(4), "big" if version == 1 else "little"
+            file.read(4), "big" if version == 1 else "little"
         )
         inflight_pieces = [
-            InFlightPiece.from_reader(reader, version)
-            for _ in range(num_inflight_piece)
+            InFlightPiece.from_file(file, version) for _ in range(num_inflight_piece)
         ]
 
         return cls(
@@ -145,15 +140,15 @@ class NodeInfo:
     node_id: bytes
 
     @classmethod
-    def from_reader(cls, reader: IO[bytes]) -> "NodeInfo":
-        plen = int.from_bytes(reader.read(1), "big")
-        reader.read(7)
+    def from_file(cls, file: IO[bytes]) -> "NodeInfo":
+        plen = int.from_bytes(file.read(1), "big")
+        file.read(7)
         class_ = IPv4Address if plen == 6 else IPv6Address
-        temp = reader.read(plen)
+        temp = file.read(plen)
         compact_peer_info = (class_(temp[:-2]), int.from_bytes(temp[-2:], "big"))
-        reader.read(24 - plen)
-        node_id = reader.read(20)
-        reader.read(4)
+        file.read(24 - plen)
+        node_id = file.read(20)
+        file.read(4)
         return cls(plen=plen, compact_peer_info=compact_peer_info, node_id=node_id)
 
     def save(self, file: IO[bytes]) -> None:
@@ -183,26 +178,26 @@ class DHTFile:
     nodes: List[NodeInfo]
 
     @classmethod
-    def from_file(cls, file: Union[str, Path]) -> "DHTFile":
+    def from_file2(cls, file: Union[str, Path]) -> "DHTFile":
         with open(file, "rb") as f:
-            return cls.from_reader(f)
+            return cls.from_file(f)
 
     @classmethod
-    def from_reader(cls, reader: IO[bytes]) -> "DHTFile":
-        mgc = reader.read(2)
+    def from_file(cls, file: IO[bytes]) -> "DHTFile":
+        mgc = file.read(2)
         assert mgc == b"\xa1\xa2", "wrong magic number"
-        fmt = reader.read(1)
+        fmt = file.read(1)
         assert fmt == b"\x02", "wrong format idr"
-        ver = reader.read(2)
+        ver = file.read(2)
         # assert ver == b'\x00\x03', "wrong version number"
-        reader.read(3)
-        mtime = int.from_bytes(reader.read(8), "big")
-        reader.read(8)
-        localnode_id = reader.read(20)
-        reader.read(4)
-        num_node = int.from_bytes(reader.read(4), "big")
-        reader.read(4)
-        nodes = [NodeInfo.from_reader(reader) for _ in range(num_node)]
+        file.read(3)
+        mtime = int.from_bytes(file.read(8), "big")
+        file.read(8)
+        localnode_id = file.read(20)
+        file.read(4)
+        num_node = int.from_bytes(file.read(4), "big")
+        file.read(4)
+        nodes = [NodeInfo.from_file(file) for _ in range(num_node)]
         return cls(
             mgc=mgc,
             fmt=fmt,

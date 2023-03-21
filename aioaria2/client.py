@@ -846,6 +846,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
             list
         )  # 存放各个notice的回调
         self._listen_task = None  # type: asyncio.Task
+        self._pending_tasks = set()
 
     @classmethod
     async def new(
@@ -916,6 +917,10 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
     async def close(self) -> None:
         if self._listen_task and not self._listen_task.cancelled():
             self._listen_task.cancel()
+            try:
+                await self._listen_task
+            except asyncio.CancelledError:
+                pass
         await super().close()
         await self._client_session.close()
 
@@ -931,7 +936,9 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
                     continue
                 if not data or not isinstance(data, dict):
                     continue
-                asyncio.create_task(self.handle_event(data))
+                task = asyncio.create_task(self.handle_event(data))
+                self._pending_tasks.add(task)  # add a strong ref
+                task.add_done_callback(self._pending_tasks.discard)
         except asyncio.CancelledError:
             pass
 

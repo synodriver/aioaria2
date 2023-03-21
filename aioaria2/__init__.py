@@ -8,7 +8,7 @@ from aioaria2.parser import ControlFile, DHTFile
 from aioaria2.server import Aria2Server, AsyncAria2Server
 from aioaria2.utils import add_async_callback, run_sync
 
-__version__ = "1.3.5rc2"
+__version__ = "1.3.5rc3"
 
 __author__ = "synodriver"
 __all__ = [
