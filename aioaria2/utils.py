@@ -150,7 +150,7 @@ def read_configfile(path: str, prefix: str = "--") -> Generator[str, None, None]
     :return:
     """
     with open(path, "r") as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             if line and not line.startswith("#"):
                 yield prefix + line
