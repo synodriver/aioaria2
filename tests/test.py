@@ -82,7 +82,6 @@ class TestWebsocket(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_onDownloadStart_and_Stop(self):
-
         data = await self.trigger.addUri(["https://www.baidu.com"])
         pprint(data)
         self.assertTrue(isinstance(data, str), data)

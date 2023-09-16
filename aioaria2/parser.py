@@ -58,51 +58,64 @@ class ControlFile:
     inflight_pieces: List[InFlightPiece]
 
     @classmethod
-    def from_file2(cls, file: Union[str, Path]) -> "ControlFile":
-        with open(file, "rb") as f:
-            return cls.from_reader(f)
-
-    @classmethod
-    def from_file(cls, file: IO[bytes]) -> "ControlFile":
-        version = int.from_bytes(file.read(2), "big")
-        ext = file.read(4)
-        info_hash_length = int.from_bytes(
-            file.read(4), "big" if version == 1 else "little"
-        )
-        if info_hash_length == 0 and ext[3] & 1 == 1:
-            raise ValueError(
-                '"infoHashCheck" extension is enabled but info hash length is 0'
+    def from_file(cls, file: Union[str, Path, IO[bytes]]) -> "ControlFile":
+        should_close: bool = False
+        try:
+            if isinstance(file, (str, Path)):
+                file_ = open(file, "rb")
+                should_close = True
+            else:
+                file_ = file  # type: ignore
+            version = int.from_bytes(file_.read(2), "big")
+            ext = file_.read(4)
+            info_hash_length = int.from_bytes(
+                file_.read(4), "big" if version == 1 else "little"
             )
-        info_hash = file.read(info_hash_length)
-        piece_length = int.from_bytes(file.read(4), "big" if version == 1 else "little")
-        total_length = int.from_bytes(file.read(8), "big" if version == 1 else "little")
-        upload_length = int.from_bytes(
-            file.read(8), "big" if version == 1 else "little"
-        )
-        bitfield_length = int.from_bytes(
-            file.read(4), "big" if version == 1 else "little"
-        )
-        bitfield = file.read(bitfield_length)
-        num_inflight_piece = int.from_bytes(
-            file.read(4), "big" if version == 1 else "little"
-        )
-        inflight_pieces = [
-            InFlightPiece.from_file(file, version) for _ in range(num_inflight_piece)
-        ]
+            if info_hash_length == 0 and ext[3] & 1 == 1:
+                raise ValueError(
+                    '"infoHashCheck" extension is enabled but info hash length is 0'
+                )
+            info_hash = file_.read(info_hash_length)
+            piece_length = int.from_bytes(
+                file_.read(4), "big" if version == 1 else "little"
+            )
+            total_length = int.from_bytes(
+                file_.read(8), "big" if version == 1 else "little"
+            )
+            upload_length = int.from_bytes(
+                file_.read(8), "big" if version == 1 else "little"
+            )
+            bitfield_length = int.from_bytes(
+                file_.read(4), "big" if version == 1 else "little"
+            )
+            bitfield = file_.read(bitfield_length)
+            num_inflight_piece = int.from_bytes(
+                file_.read(4), "big" if version == 1 else "little"
+            )
+            inflight_pieces = [
+                InFlightPiece.from_file(file_, version)
+                for _ in range(num_inflight_piece)
+            ]
 
-        return cls(
-            version=version,
-            ext=ext,
-            info_hash_length=info_hash_length,
-            info_hash=info_hash,
-            piece_length=piece_length,
-            total_length=total_length,
-            upload_length=upload_length,
-            bitfield_length=bitfield_length,
-            bitfield=bitfield,
-            num_inflight_piece=num_inflight_piece,
-            inflight_pieces=inflight_pieces,
-        )
+            return cls(
+                version=version,
+                ext=ext,
+                info_hash_length=info_hash_length,
+                info_hash=info_hash,
+                piece_length=piece_length,
+                total_length=total_length,
+                upload_length=upload_length,
+                bitfield_length=bitfield_length,
+                bitfield=bitfield,
+                num_inflight_piece=num_inflight_piece,
+                inflight_pieces=inflight_pieces,
+            )
+        finally:
+            if should_close:
+                try:
+                    file_.close()
+                except:
+                    pass
 
     def save(self, file: IO[bytes]) -> None:
         file.write(self.version.to_bytes(2, "big" if self.version == 1 else "little"))
@@ -178,35 +191,43 @@ class DHTFile:
     nodes: List[NodeInfo]
 
     @classmethod
-    def from_file2(cls, file: Union[str, Path]) -> "DHTFile":
-        with open(file, "rb") as f:
-            return cls.from_file(f)
-
-    @classmethod
-    def from_file(cls, file: IO[bytes]) -> "DHTFile":
-        mgc = file.read(2)
-        assert mgc == b"\xa1\xa2", "wrong magic number"
-        fmt = file.read(1)
-        assert fmt == b"\x02", "wrong format idr"
-        ver = file.read(2)
-        # assert ver == b'\x00\x03', "wrong version number"
-        file.read(3)
-        mtime = int.from_bytes(file.read(8), "big")
-        file.read(8)
-        localnode_id = file.read(20)
-        file.read(4)
-        num_node = int.from_bytes(file.read(4), "big")
-        file.read(4)
-        nodes = [NodeInfo.from_file(file) for _ in range(num_node)]
-        return cls(
-            mgc=mgc,
-            fmt=fmt,
-            ver=ver,
-            mtime=mtime,
-            localnode_id=localnode_id,
-            num_node=num_node,
-            nodes=nodes,
-        )
+    def from_file(cls, file: Union[str, Path, IO[bytes]]) -> "DHTFile":
+        should_close: bool = False
+        try:
+            if isinstance(file, (str, Path)):
+                file_ = open(file, "rb")
+                should_close = True
+            else:
+                file_ = file  # type: ignore
+            mgc = file_.read(2)
+            assert mgc == b"\xa1\xa2", "wrong magic number"
+            fmt = file_.read(1)
+            assert fmt == b"\x02", "wrong format idr"
+            ver = file_.read(2)
+            # assert ver == b'\x00\x03', "wrong version number"
+            file_.read(3)
+            mtime = int.from_bytes(file_.read(8), "big")
+            file_.read(8)
+            localnode_id = file_.read(20)
+            file_.read(4)
+            num_node = int.from_bytes(file_.read(4), "big")
+            file_.read(4)
+            nodes = [NodeInfo.from_file(file_) for _ in range(num_node)]
+            return cls(
+                mgc=mgc,
+                fmt=fmt,
+                ver=ver,
+                mtime=mtime,
+                localnode_id=localnode_id,
+                num_node=num_node,
+                nodes=nodes,
+            )
+        finally:
+            if should_close:
+                try:
+                    file_.close()
+                except:
+                    pass
 
     def save(self, file: IO[bytes]) -> None:
         file.write(self.mgc)
