@@ -2,13 +2,13 @@
 """
 本模块存放工具函数
 """
-import sys
-import json
-import base64
 import asyncio
-from functools import wraps, partial
+import base64
 import contextvars
-from typing import Optional, Any, Awaitable, Dict, Generator, Callable
+import json
+import sys
+from functools import partial, wraps
+from typing import Any, Awaitable, Callable, Dict, Generator, Optional
 
 import aiofiles
 
@@ -27,6 +27,7 @@ class ResultStore:
     """
     websocket 结果缓存类
     """
+
     _id = 1  # jsonrpc的id
     _futures: Dict[int, asyncio.Future] = {}  # 暂存id对应的未来对象
 
@@ -56,7 +57,9 @@ class ResultStore:
             future.set_result(result)
 
     @classmethod
-    async def fetch(cls, identity: int, timeout: Optional[float] = None) -> Dict[str, Any]:
+    async def fetch(
+        cls, identity: int, timeout: Optional[float] = None
+    ) -> Dict[str, Any]:
         """
         返回暂存在本类中的结果
         :param identity: jsonrpc返回的id
@@ -123,7 +126,7 @@ async def b64encode_file(path: str) -> str:
     """
     读取文件，转换b64编码
     """
-    async with aiofiles.open(path, 'rb') as handle:
+    async with aiofiles.open(path, "rb") as handle:
         return str(base64.b64encode(await handle.read()), JSON_ENCODING)
 
 
@@ -132,11 +135,11 @@ def get_status(response: Dict) -> Any:
     Process a status response.
     """
     if not response:
-        return 'error'
+        return "error"
     try:
-        return response['status']
+        return response["status"]
     except KeyError:
-        return 'error'
+        return "error"
 
 
 def read_configfile(path: str, prefix: str = "--") -> Generator[str, None, None]:

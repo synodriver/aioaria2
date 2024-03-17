@@ -198,5 +198,19 @@ def callback2(trigger, data:dict):
 
 * 更好的关闭
 
+### v1.3.5rc2
+
+* aria2二进制文件解析器
+
+```python
+from pprint import pprint
+from aioaria2 import DHTFile
+
+pprint(DHTFile.from_file2("dht.dat"))
+```
+
+### v1.3.5rc3
+
+* 对没完成的task使用强引用以防止被gc
 
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)
