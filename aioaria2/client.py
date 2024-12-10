@@ -708,9 +708,7 @@ class _Aria2BaseClient:
         response = await self.tellStatus(gid, ["status"])
         return get_status(response)
 
-    async def get_statuses(
-        self, gids: Iterable
-    ) -> AsyncGenerator[
+    async def get_statuses(self, gids: Iterable) -> AsyncGenerator[
         Literal["active", "waiting", "paused", "error", "complete", "removed", "error"],
         None,
     ]:
@@ -782,7 +780,7 @@ class Aria2HttpClient(_Aria2BaseClient):
                 self.url, json=req_obj, **self.kw
             ) as response:
                 try:
-                    data = await response.json(loads=self.loads)
+                    data = self.loads(await response.text())
                     return data["result"]
                 except KeyError:
                     raise Aria2rpcException(f"unexpected result: {data}")
@@ -798,7 +796,7 @@ class Aria2HttpClient(_Aria2BaseClient):
         await self.close()
 
 
-class Aria2WebsocketTrigger(_Aria2BaseClient):
+class Aria2WebsocketClient(_Aria2BaseClient):
     def __init__(
         self,
         url: str,
@@ -859,7 +857,7 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         client_session: aiohttp.ClientSession = None,
         reconnect_interval: int = 1,
         **kw,
-    ) -> "Aria2WebsocketTrigger":
+    ) -> "Aria2WebsocketClient":
         """
         真正创建实例
         :param queue: 继承下来的任务队列
@@ -1049,4 +1047,4 @@ class Aria2WebsocketTrigger(_Aria2BaseClient):
         await self.close()
 
 
-Aria2WebsocketClient = Aria2WebsocketTrigger
+Aria2WebsocketTrigger = Aria2WebsocketClient

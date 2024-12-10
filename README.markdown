@@ -211,3 +211,7 @@ pprint(DHTFile.from_file2("dht.dat"))
 ### v1.3.5rc3
 
 * add strong ref to pending tasks
+
+### v1.3.6
+
+* update latest aiohttp version

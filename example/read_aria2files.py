@@ -1,6 +1,7 @@
 """
 Copyright (c) 2008-2023 synodriver <diguohuangjiajinweijun@gmail.com>
 """
+
 from io import BytesIO
 
 from aioaria2 import ControlFile, DHTFile

@@ -4,16 +4,16 @@
 """
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, TypeVar, Union
 
-Aria2WebsocketTrigger = TypeVar("Aria2WebsocketTrigger", bound="Aria2WebsocketTrigger")
+Aria2WebsocketClient = TypeVar("Aria2WebsocketClient", bound="Aria2WebsocketClient")
 
 if TYPE_CHECKING:
-    from aioaria2 import Aria2WebsocketTrigger
+    from aioaria2 import Aria2WebsocketClient
 
 """
 Websocket事件的回调函数
 """
 CallBack = Callable[
-    [Aria2WebsocketTrigger, Dict[str, Any]], Union[Awaitable[Any], Awaitable[None]]
+    [Aria2WebsocketClient, Dict[str, Any]], Union[Awaitable[Any], Awaitable[None]]
 ]
 
 """
