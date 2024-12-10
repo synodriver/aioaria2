@@ -52,7 +52,7 @@ class ResultStore:
             future = cls._futures.get(result["id"])
             if not future or future.done():
                 # 没有这个future fetch没有被调用 future=None
-                future = asyncio.get_event_loop().create_future()
+                future = asyncio.get_running_loop().create_future()
                 cls._futures[result["id"]] = future
             future.set_result(result)
 
@@ -69,7 +69,9 @@ class ResultStore:
         if cls._futures.get(identity):  # 已经存在这个id的future了 不用创建了
             future = cls._futures[identity]
         else:
-            future = asyncio.get_event_loop().create_future()  # todo 可能会导致Future泄漏吗?
+            future = (
+                asyncio.get_running_loop().create_future()
+            )  # todo 可能会导致Future泄漏吗?
             cls._futures[identity] = future
         try:
             return await asyncio.wait_for(future, timeout)
