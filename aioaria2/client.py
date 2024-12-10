@@ -99,9 +99,7 @@ class _Aria2BaseClient:
         if self.mode == "batch":
             await self.queue.put(req_obj)
             return None
-        if self.mode == "format":
-            return req_obj
-        return await self.send_request(req_obj)
+        return req_obj if self.mode == "format" else await self.send_request(req_obj)
 
     async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], Any]:
         raise NotImplementedError
@@ -117,8 +115,7 @@ class _Aria2BaseClient:
         while not self.queue.empty():
             req_objs.append(await self.queue.get())
 
-        results = await asyncio.gather(*map(self.send_request, req_objs))
-        return results
+        return await asyncio.gather(*map(self.send_request, req_objs))
 
     async def addUri(
         self, uris: List[str], options: Dict[str, Any] = None, position: int = None
@@ -730,7 +727,7 @@ class _Aria2BaseClient:
                 except KeyError:
                     yield "error"
         else:
-            for gid in gids:
+            for _ in gids:
                 yield "error"
 
     async def close(self) -> None:
