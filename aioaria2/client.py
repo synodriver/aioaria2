@@ -153,8 +153,9 @@ class _Aria2BaseClient:
         {"result":"2089b05ecca3d829"}
         """
         params = [torrent]
-        if uris:
-            params.append(uris)  # type: ignore
+        if not uris:
+            uris = []
+        params.append(uris)  # type: ignore
         params = add_options_and_position(params, options, position)
         return await self.jsonrpc("addTorrent", params)
 
