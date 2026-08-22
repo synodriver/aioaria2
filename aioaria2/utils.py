@@ -111,16 +111,20 @@ def add_options_and_position(params: list, options=None, position=None) -> list:
     """
     Convenience method for adding options and position to parameters.
     """
-    if options:
-        params.append(options)
-    if position:
+    if position is not None:
         if not isinstance(position, int):
             try:
                 position = int(position)
-            except ValueError:
-                position = -1
-        if position >= 0:
-            params.append(position)
+            except (TypeError, ValueError):
+                raise ValueError("position must be a non-negative integer") from None
+        if position < 0:
+            raise ValueError("position must be a non-negative integer")
+    if options is not None:
+        params.append(options)
+    if position is not None:
+        if options is None:
+            params.append({})
+        params.append(position)
     return params
 
 

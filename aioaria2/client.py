@@ -127,7 +127,7 @@ class _Aria2BaseClient:
         添加新的任务到下载队列
         :param uris: 要添加的链接 务必是list HTTP/FTP/SFTP/BitTorrent URIs (strings)
         :param options:附加参数
-        :param position:在下载队列中的位置
+        :param position:在下载队列中的位置，必须是非负整数；省略时追加到队尾
         :return:包含结果的json
         {"result":"2089b05ecca3d829"}
         """
@@ -148,13 +148,13 @@ class _Aria2BaseClient:
         :param uris: uri用于播种 对于单个文件，URI可以是指向资源的完整URI;如果URI以/结尾，则添加到torrent文件。
             对于多文件的torrent，则会在torrent文件中添加名称和路径以生成每个文件的URI。
         :param options:参数字典
-        :param position:在下载队列中的位置
+        :param position:在下载队列中的位置，必须是非负整数；省略时追加到队尾
         :return:包含结果的json
         {"result":"2089b05ecca3d829"}
         """
         params = [torrent]
-        if uris:
-            params.append(uris)  # type: ignore
+        if uris is not None or options is not None or position is not None:
+            params.append(uris if uris is not None else [])  # type: ignore
         params = add_options_and_position(params, options, position)
         return await self.jsonrpc("addTorrent", params)
 
@@ -165,7 +165,7 @@ class _Aria2BaseClient:
         此方法通过上载一个来添加一个Metalink下载 metalink是一个用base64编码的字符串，其中包含“.metalink”文件。
         :param metalink: base64编码的字符串 base64.b64encode(open('file.meta4',"rb").read())
         :param options:参数字典
-        :param position:在下载队列中的位置
+        :param position:在下载队列中的位置，必须是非负整数；省略时追加到队尾
         :return:包含结果的json
         {"result":"2089b05ecca3d829"}
         """
@@ -491,12 +491,21 @@ class _Aria2BaseClient:
         :param fileIndex:用于选择要删除/附加哪个文件。fileIndex从0开始。
         :param delUris: 要删除的
         :param addUris: 要添加的
-        :param position: position用于指定在现有的等待URI列表中插入URI的位置 0开始
+        :param position: position用于指定在现有的等待URI列表中插入URI的位置，必须是非负整数；省略时追加到队尾
         :return:
          [0, 1]
         """
         params = [gid, fileIndex, delUris, addUris]
-        if position:
+        if position is not None:
+            if not isinstance(position, int):
+                try:
+                    position = int(position)
+                except (TypeError, ValueError):
+                    raise ValueError(
+                        "position must be a non-negative integer"
+                    ) from None
+            if position < 0:
+                raise ValueError("position must be a non-negative integer")
             params.append(position)
         return await self.jsonrpc("changeUri", params)
 
@@ -717,21 +726,20 @@ class _Aria2BaseClient:
         :param gids:
         :return:
         """
+        gids = list(gids)
         methods = [
             {"methodName": "aria2.tellStatus", "params": [gid, ["gid", "status"]]}
             for gid in gids
         ]
         results = await self.multicall(methods)
-        if results:
-            status = {r[0]["gid"]: r[0]["status"] for r in results}
-            for gid in gids:
-                try:
-                    yield status[gid]
-                except KeyError:
-                    yield "error"
-        else:
-            for gid in gids:
-                yield "error"
+        status = {}
+        for result in results or []:
+            if isinstance(result, list) and result:
+                item = result[0]
+                if isinstance(item, dict) and "gid" in item and "status" in item:
+                    status[item["gid"]] = item["status"]
+        for gid in gids:
+            yield status.get(gid, "error")
 
     async def close(self) -> None:
         await self.client_session.close()  # type: ignore
@@ -779,12 +787,22 @@ class Aria2HttpClient(_Aria2BaseClient):
             async with self.client_session.post(
                 self.url, json=req_obj, **self.kw
             ) as response:
+                body = await response.text()
                 try:
-                    data = self.loads(await response.text())
+                    data = self.loads(body)
+                except (TypeError, ValueError) as err:
+                    raise Aria2rpcException(
+                        f"unexpected response: {body}"
+                    ) from err
+                if not 200 <= response.status < 300:
+                    raise Aria2rpcException(
+                        f"unexpected response status {response.status}: {data}"
+                    )
+                try:
                     return data["result"]
-                except KeyError:
+                except (KeyError, TypeError):
                     raise Aria2rpcException(f"unexpected result: {data}")
-        except aiohttp.ClientConnectionError as err:
+        except aiohttp.ClientError as err:
             raise Aria2rpcException(
                 str(err), connection_error=("Cannot connect" in str(err))
             ) from err
@@ -806,6 +824,7 @@ class Aria2WebsocketClient(_Aria2BaseClient):
         queue: asyncio.Queue = None,
         client_session: aiohttp.ClientSession = None,
         reconnect_interval: int = 1,
+        max_attempts: int = 3,
         **kw,
     ):
         """
@@ -816,6 +835,7 @@ class Aria2WebsocketClient(_Aria2BaseClient):
             batch - 请求加入队列，由process_queue方法处理
             format - 返回rpc请求json结构
         :param token: rpc服务器密码 (用 `--rpc-secret`设置)
+        :param max_attempts: websocket请求超时后的总尝试次数（包含首次请求）
         :param queue: 请求队列
         :param kw: ws_connect()的相关参数
             new in v1.3.1 loads: DEFAULT_JSON_DECODER   json.loads
@@ -836,10 +856,13 @@ class Aria2WebsocketClient(_Aria2BaseClient):
         self.dumps = (
             self.kw.pop("dumps") if "dumps" in self.kw else DEFAULT_JSON_ENCODER
         )
+        if max_attempts < 1:
+            raise ValueError("max_attempts must be at least 1")
         self._client_session = client_session or aiohttp.ClientSession(
             json_serialize=self.dumps
         )  # type: aiohttp.ClientSession
         self.reconnect_interval = reconnect_interval
+        self.max_attempts = max_attempts
         self.functions: DefaultDict[str, List[CallBack]] = defaultdict(
             list
         )  # 存放各个notice的回调
@@ -856,6 +879,7 @@ class Aria2WebsocketClient(_Aria2BaseClient):
         queue: asyncio.Queue = None,
         client_session: aiohttp.ClientSession = None,
         reconnect_interval: int = 1,
+        max_attempts: int = 3,
         **kw,
     ) -> "Aria2WebsocketClient":
         """
@@ -865,9 +889,11 @@ class Aria2WebsocketClient(_Aria2BaseClient):
         :param url:  rpc服务器地址
         :param mode: 同上
         :param token: rpc服务器密码 (用 `--rpc-secret`设置)
+        :param max_attempts: websocket请求超时后的总尝试次数（包含首次请求）
         :param kw: ws_connect()的相关参数
         :return: 真正的实例
         """
+        self = None
         try:
             self = cls(
                 url,
@@ -877,6 +903,7 @@ class Aria2WebsocketClient(_Aria2BaseClient):
                 queue,
                 client_session,
                 reconnect_interval,
+                max_attempts,
                 **kw,
             )
             self.client_session = await self._client_session.ws_connect(
@@ -884,29 +911,34 @@ class Aria2WebsocketClient(_Aria2BaseClient):
             )
             self._listen_task = asyncio.create_task(self.listen())
             return self
-        except aiohttp.ClientError as err:
-            await self._client_session.close()
+        except Exception as err:
+            if self is not None:
+                await self._client_session.close()
             raise Aria2rpcException(
                 str(err), connection_error=("Cannot connect" in str(err))
             ) from err
 
     async def send_request(self, req_obj: Dict[str, Any]) -> Union[Dict[str, Any], str, NoReturn]:  # type: ignore
-        try:
-            await self.client_session.send_json(req_obj, dumps=self.dumps)
-            data = await ResultStore.fetch(
-                req_obj["id"], self.kw.get("timeout", None) or 10.0
-            )
-            return data["result"]
-        except KeyError:  # 'error':xxx
-            raise Aria2rpcException(f"unexpected result: {data}")
-        except Aria2rpcException as err:
-            if not self.closed and "timeout" in err.msg:
+        for attempt in range(self.max_attempts):
+            try:
+                await self.client_session.send_json(req_obj, dumps=self.dumps)
+                data = await ResultStore.fetch(
+                    req_obj["id"], self.kw.get("timeout", None) or 10.0
+                )
+                return data["result"]
+            except KeyError:  # 'error':xxx
+                raise Aria2rpcException(f"unexpected result: {data}")
+            except Aria2rpcException as err:
+                if "timeout" not in err.msg or self.closed:
+                    raise
+                if attempt + 1 >= self.max_attempts:
+                    raise
                 await asyncio.sleep(self.reconnect_interval)
-                return await self.send_request(req_obj)
-        except Exception as err:
-            raise Aria2rpcException(
-                str(err), connection_error=("Cannot connect" in str(err))
-            ) from err
+            except Exception as err:
+                raise Aria2rpcException(
+                    str(err), connection_error=("Cannot connect" in str(err))
+                ) from err
+        raise Aria2rpcException("jsonrpc over websocket call failed")
 
     @property
     def closed(self) -> bool:
@@ -1036,11 +1068,17 @@ class Aria2WebsocketClient(_Aria2BaseClient):
 
     async def __aenter__(self):
         if not hasattr(self, "client_session"):
-            self.client_session: aiohttp.ClientWebSocketResponse = (
-                await self._client_session.ws_connect(self.url, **self.kw)
-            )
-            self._listen_task = asyncio.create_task(self.listen())
-            return self
+            try:
+                self.client_session: aiohttp.ClientWebSocketResponse = (
+                    await self._client_session.ws_connect(self.url, **self.kw)
+                )
+                self._listen_task = asyncio.create_task(self.listen())
+                return self
+            except Exception as err:
+                await self._client_session.close()
+                raise Aria2rpcException(
+                    str(err), connection_error=("Cannot connect" in str(err))
+                ) from err
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

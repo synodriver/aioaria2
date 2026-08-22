@@ -139,6 +139,3 @@ class AsyncAria2Server(Aria2Server):
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._is_running:
             await self.terminate()
-
-
-pass

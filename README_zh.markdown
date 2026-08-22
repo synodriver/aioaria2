@@ -82,7 +82,7 @@ loop.create_task(main())
 loop.run_forever()
 ```
 
-- 运行该协程函数即可，方法对应aria2jsonrpc的方法。对于服务端，每一个实例对应一个aria2进程
+- 运行该协程函数即可，方法对应aria2jsonrpc的方法。服务端管理器在进程内是单例，用于避免一台机器启动过多 aria2 进程；后续构造会复用第一次构造时的命令行参数。
 
 ```python
 import aioaria2

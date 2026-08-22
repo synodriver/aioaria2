@@ -81,7 +81,7 @@ loop.create_task(main())
 loop.run_forever()
 ```
 
-- Run that coroutine function and each method represent an aria2-rpc call. As for server, each instance represent an aria2 process.
+- Run that coroutine function and each method represent an aria2-rpc call. The server manager is a process-wide singleton to avoid starting multiple aria2 processes on one machine; subsequent constructions reuse the first command line.
 
 ```python
 import aioaria2
