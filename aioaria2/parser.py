@@ -5,7 +5,7 @@ See https://aria2.github.io/manual/en/html/technical-notes.html
 from dataclasses import dataclass
 from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
-from typing import IO, List, Union
+from typing import IO
 
 
 @dataclass
@@ -55,10 +55,10 @@ class ControlFile:
     bitfield_length: int
     bitfield: bytes
     num_inflight_piece: int
-    inflight_pieces: List[InFlightPiece]
+    inflight_pieces: list[InFlightPiece]
 
     @classmethod
-    def from_file(cls, file: Union[str, Path, IO[bytes]]) -> "ControlFile":
+    def from_file(cls, file: str | Path | IO[bytes]) -> "ControlFile":
         should_close: bool = False
         try:
             if isinstance(file, (str, Path)):
@@ -188,10 +188,10 @@ class DHTFile:
     mtime: int
     localnode_id: bytes
     num_node: int
-    nodes: List[NodeInfo]
+    nodes: list[NodeInfo]
 
     @classmethod
-    def from_file(cls, file: Union[str, Path, IO[bytes]]) -> "DHTFile":
+    def from_file(cls, file: str | Path | IO[bytes]) -> "DHTFile":
         should_close: bool = False
         try:
             if isinstance(file, (str, Path)):

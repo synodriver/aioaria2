@@ -15,7 +15,7 @@ ENCODING = "gbk"
 
 # --------------------------#
 #
-# cache: Dict[str, object] = {}
+# cache: dict[str, object] = {}
 
 
 # def single_instance(cls: type):
@@ -60,7 +60,7 @@ class Aria2Server(metaclass=SingletonType):
         self.cmd = list(args) if args else []
         if daemon:
             self.cmd.append("--stop-with-process={:d}".format(os.getpid()))
-        self.process: subprocess.Popen = None  # type: ignore
+        self.process: subprocess.Popen | None = None  # type: ignore
         self._is_running = False
 
     def start(self) -> None:
@@ -72,6 +72,7 @@ class Aria2Server(metaclass=SingletonType):
         等待进程结束
         :return: ret code
         """
+        assert self.process is not None
         code = self.process.wait()
         self._is_running = False
         return code
@@ -81,19 +82,23 @@ class Aria2Server(metaclass=SingletonType):
         结束进程
         :return: ret code
         """
+        assert self.process is not None
         self.process.terminate()
         return self.wait()
 
     def kill(self) -> int:
+        assert self.process is not None
         self.process.kill()
         return self.wait()
 
     @property
     def pid(self) -> int:
+        assert self.process is not None
         return self.process.pid
 
     @property
-    def returncode(self) -> int:
+    def returncode(self) -> int | None:
+        assert self.process is not None
         return self.process.returncode
 
     def __enter__(self) -> "Aria2Server":
@@ -120,15 +125,18 @@ class AsyncAria2Server(Aria2Server):
         self._is_running = True
 
     async def wait(self) -> int:  # type: ignore
+        assert self.process is not None
         code = await self.process.wait()  # type: ignore
         self._is_running = False
         return code
 
     async def terminate(self) -> int:  # type: ignore
+        assert self.process is not None
         self.process.terminate()
         return await self.wait()
 
     async def kill(self) -> int:  # type: ignore
+        assert self.process is not None
         self.process.kill()
         return await self.wait()
 
@@ -139,6 +147,3 @@ class AsyncAria2Server(Aria2Server):
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if self._is_running:
             await self.terminate()
-
-
-pass

@@ -81,7 +81,7 @@ loop.create_task(main())
 loop.run_forever()
 ```
 
-- Run that coroutine function and each method represent an aria2-rpc call. As for server, each instance represent an aria2 process.
+- Run that coroutine function and each method represent an aria2-rpc call. The server manager is a process-wide singleton to avoid starting multiple aria2 processes on one machine; subsequent constructions reuse the first command line.
 
 ```python
 import aioaria2
@@ -215,3 +215,13 @@ pprint(DHTFile.from_file2("dht.dat"))
 ### v1.3.6
 
 * update latest aiohttp version
+
+### v1.3.7
+
+* require Python 3.10 or newer and modernize type annotations to use built-in generics and union syntax
+* remove the no-longer-needed `typing-extensions` runtime dependency
+* fix optional RPC parameter placement, including explicit `position=0`; reject invalid negative positions
+* bound WebSocket timeout retries with `max_attempts` and clean up failed connections consistently
+* normalize HTTP error responses to `Aria2rpcException`
+* handle generator inputs and per-call faults in `get_statuses`
+* document the process-wide aria2 server singleton behavior

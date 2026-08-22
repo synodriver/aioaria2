@@ -2,15 +2,12 @@
 """
 本模块存放异常
 """
-from typing import Optional
-
-
 class Aria2rpcException(Exception):
     """
     Base exception raised by this module.
     """
 
-    def __init__(self, msg: str, connection_error: Optional[bool] = False):
+    def __init__(self, msg: str, connection_error: bool = False):
         super().__init__(msg)
         self.msg = msg
         self.connection_error = connection_error

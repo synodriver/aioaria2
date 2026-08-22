@@ -82,7 +82,7 @@ loop.create_task(main())
 loop.run_forever()
 ```
 
-- 运行该协程函数即可，方法对应aria2jsonrpc的方法。对于服务端，每一个实例对应一个aria2进程
+- 运行该协程函数即可，方法对应aria2jsonrpc的方法。服务端管理器在进程内是单例，用于避免一台机器启动过多 aria2 进程；后续构造会复用第一次构造时的命令行参数。
 
 ```python
 import aioaria2
@@ -216,5 +216,15 @@ pprint(DHTFile.from_file2("dht.dat"))
 ### v1.3.6
 
 * 更新aiohttp最新版，解决不兼容问题
+
+### v1.3.7
+
+* 最低支持 Python 3.10，并将类型注释更新为内置泛型和联合类型语法
+* 移除不再需要的 `typing-extensions` 运行时依赖
+* 修复 RPC 可选参数定位，包括显式 `position=0`；非法负数位置现在会被拒绝
+* 为 WebSocket 超时重试增加 `max_attempts` 上限，并统一清理失败连接
+* 将 HTTP 错误响应统一转换为 `Aria2rpcException`
+* 修复 `get_statuses` 对生成器输入和单项 fault 的处理
+* 补充服务端进程内单例行为说明
 
 ![title](https://konachan.com/sample/c7f565c0cd96e58908bc852dd754f61a/Konachan.com%20-%20302356%20sample.jpg)
