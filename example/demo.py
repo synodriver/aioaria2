@@ -7,6 +7,8 @@ import ujson
 
 import aioaria2
 
+print(aioaria2.__version__)
+
 HOST = "http://127.0.0.1:6800/jsonrpc"
 
 
@@ -20,19 +22,22 @@ async def on_download_error(trigger: aioaria2.Aria2WebsocketClient, data: dict):
 async def on_download_complete(trigger: aioaria2.Aria2WebsocketClient, data: dict):
     print("Congratulations! You have successfully across the great wall")
 
+async def on_download_pause(trigger: aioaria2.Aria2WebsocketClient, data: dict):
+    print(f"paused: {data["params"][0]["gid"]}")
+
 
 async def main():
     client: aioaria2.Aria2WebsocketClient = await aioaria2.Aria2WebsocketClient.new(
-        "http://127.0.0.1:6800/jsonrpc",
+        HOST,
         token="token",
         loads=ujson.loads,
         dumps=ujson.dumps,
     )
     client.onDownloadError(on_download_error)
     client.onDownloadComplete(on_download_complete)
+    client.onDownloadPause(on_download_pause)
     pprint(await client.addUri(["http://www.google.com"]))  #
+    await asyncio.sleep(3600)
 
 
-loop = asyncio.get_event_loop()
-loop.create_task(main())
-loop.run_forever()
+asyncio.run(main())

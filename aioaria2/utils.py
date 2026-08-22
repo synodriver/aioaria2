@@ -7,10 +7,11 @@ import base64
 import contextvars
 import json
 import sys
+from collections.abc import Awaitable, Callable, Generator
 from functools import partial, wraps
-from typing import Any, Awaitable, Callable, Dict, Generator, Optional
+from typing import Any
 
-import aiofiles
+import aiofiles  # type: ignore[import-untyped]
 
 from aioaria2.exceptions import Aria2rpcException
 
@@ -29,7 +30,7 @@ class ResultStore:
     """
 
     _id = 1  # jsonrpc的id
-    _futures: Dict[int, asyncio.Future] = {}  # 暂存id对应的未来对象
+    _futures: dict[int, asyncio.Future] = {}  # 暂存id对应的未来对象
 
     @classmethod
     def get_id(cls) -> int:
@@ -42,7 +43,7 @@ class ResultStore:
         return s
 
     @classmethod
-    def add_result(cls, result: Dict[str, Any]) -> None:
+    def add_result(cls, result: dict[str, Any]) -> None:
         """
         收到websocket消息的时候,用这个类存储结果 表示一次特定的请求返回了
         :param result: jsonrpc的回复格式 {'id':int,'jsonrpc','2.0','result':xxx}
@@ -58,8 +59,8 @@ class ResultStore:
 
     @classmethod
     async def fetch(
-        cls, identity: int, timeout: Optional[float] = None
-    ) -> Dict[str, Any]:
+        cls, identity: int, timeout: float | None = None
+    ) -> dict[str, Any]:
         """
         返回暂存在本类中的结果
         :param identity: jsonrpc返回的id
@@ -136,7 +137,7 @@ async def b64encode_file(path: str) -> str:
         return str(base64.b64encode(await handle.read()), JSON_ENCODING)
 
 
-def get_status(response: Dict) -> Any:
+def get_status(response: dict) -> Any:
     """
     Process a status response.
     """
@@ -160,6 +161,3 @@ def read_configfile(path: str, prefix: str = "--") -> Generator[str, None, None]
             line = line.strip()
             if line and not line.startswith("#"):
                 yield prefix + line
-
-
-pass
