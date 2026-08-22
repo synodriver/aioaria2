@@ -23,7 +23,7 @@ async def on_download_complete(trigger: aioaria2.Aria2WebsocketClient, data: dic
     print("Congratulations! You have successfully across the great wall")
 
 async def on_download_pause(trigger: aioaria2.Aria2WebsocketClient, data: dict):
-    print(f"paused: {data["params"][0]["gid"]}")
+    print(f"paused: {data['params'][0]['gid']}")
 
 
 async def main():
